@@ -1,0 +1,271 @@
+.bg {
+    margin: 0;
+    padding: 0;
+    font-family: Century Gothic,CenturyGothic,AppleGothic,sans-serif; 
+    background-color: #F0F0FF; /* Set background color for demonstration */
+}
+
+.navbar {
+    background-color: #242c44; /* White color with 0.6 opacity */
+    padding: 10px 20px;
+    display: flex;
+    justify-content: flex-start;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000; /* Ensure it is above other elements */
+    color: white;
+}
+
+/* Navbar container */
+.navbar-container {
+    display: flex;
+    justify-content: flex-start; /* Align items to the ends */
+    width: 100%; /* Ensure the container spans the entire width */
+    padding: 0 20px; /* Add padding to create space */
+    margin-left: 2%;
+    align-items: center;
+}
+
+/* Navbar heading */
+.navbar-heading {
+    
+    margin: 0;
+    margin-left: auto; /* Push the heading to the right */
+    text-decoration: none;
+    font-size: 20px;
+    border: 1px solid white;
+    border-radius: 15px;
+    padding: 2px;
+    font-weight: bold;
+}
+
+.navbar-heading:hover{
+    background-color: gold;
+    color: #000;
+}
+
+.logo {
+    height: 50px;
+    width: auto;
+}
+
+.sidebar {
+    background-color: #242c44; /* White color with 0.6 opacity */
+    width: 220px;
+    padding: 20px 10px 20px 10px;
+    height: 100%;
+    font-size: 20px;
+    position: fixed;
+    color: white;
+    top: 73px;
+}
+
+.sidebar-item {
+    padding: 10px 0; /* Adjusted padding */
+    border-bottom: 1px solid #F0F0FF;
+    text-decoration: none;
+    color: white;
+    display: block; /* Changed display property to block */
+    text-align: center;
+    border-radius: 15px;
+}
+
+.sidebar-item.active {
+    background-color: #F0F0FF; /* Set background color to gold */
+    color: black; /* Set text color to black */
+    font-weight: bold;
+    display: block; /* Changed display property to block */
+    padding: 10px 0; /* Adjusted padding */
+    border-bottom: 1px solid #ccc;
+}
+
+.sidebar-item:hover {
+    background-color: #F0F0FF;
+    color: black; /* Set text color to black on hover */
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.logout-btn {
+    margin-top: auto; /* Pushes the logout button to the bottom */
+    padding: 10px 0;
+    text-decoration: none;
+    color: white;
+    display: block;
+    text-align: center;
+    border-radius: 15px;
+    border-bottom: 1px solid #F0F0FF;
+}
+
+.logout-btn:hover {
+    background-color: crimson; /* Set background color to crimson on hover */
+    color: black; /* Set text color to black on hover */
+    font-weight: bold;
+}
+
+.secondary-navbar {
+    background-color: #F0F0FF; /* Dark background color */
+    padding: 10px 20px;
+    display: flex;
+    justify-content: flex-start; /* Align items to the start */
+    align-items: center;
+    position: fixed;
+    top: 70px; /* Adjusted to be below the navbar */
+    width: 100%;
+    border-bottom: 2px solid black;
+    z-index: 999; /* Ensure it's below the main navbar */
+    border-radius: 15px;
+    margin-left: 240px;
+}
+
+.secondary-navbar-item {
+    padding: 15px; /* Adjusted padding */
+    text-decoration: none;
+    color: white;
+    display: block; /* Changed display property to block */
+    border-left: 2px solid black;
+    text-align: center;
+    border-radius: 15px;
+}
+
+.secondary-navbar-item:hover {
+    background-color: #00ABE4; /* Set background color to #00ABE4 on hover */
+    color: black; /* Set text color to black on hover */
+    font-weight: bold;
+}
+
+.secondary-navbar-item.active {
+    background-color: #00ABE4; /* Set background color to white */
+    color: black; /* Set text color to black */
+    font-weight: bold;
+    border-radius: 15px;
+}
+
+/* Additional CSS for box styling */
+.content-container {
+    margin-top: 140px; /* Adjusted to match the height of the navbar */
+    margin-left: 240px; /* Adjusted to match the width of the sidebar */
+    padding-left: 20px; /* Add padding to separate content from sidebar */
+    overflow-y: auto; /* Add vertical scrollbar */
+    height: calc(100% - 70px); /* Adjusted to fill the remaining height */
+    padding-bottom: 20px;
+    
+}
+
+input[type="number"],
+input[type="date"],
+input[type="text"],
+input[type="password"],
+input[type="file"],
+select {
+    width: calc(100% - 10px); /* Adjust width and margin as needed */
+    height: 30px;
+    padding: 5px;
+    border: none;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    background-color: #ddd; /* Input box color */
+    color: black; /* Text color */
+}
+
+select {
+    appearance: none; /* Remove default appearance */
+    background-image: url("data:image/svg+xml,%3csvg fill='%23000000' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3cpath d='M0 0h24v24H0z' fill='none'/%3e%3c/svg%3e"); /* Add custom arrow */
+    background-repeat: no-repeat;
+    background-position: right 5px top 50%;
+    width: 100%;
+}
+
+button[type="submit"],
+button[type="button"] {
+    width: calc(100% - 10px); /* Adjust width and margin as needed */
+    padding: 10px;
+    border: none;
+    border-radius: 15px;
+    background-color: #004AAD; /* Input box color */
+    color: white; /* Button text color */
+    cursor: pointer;
+}
+
+button[type="submit"]:hover{
+    background-color: green; /* Button background color on hover */
+}
+button[type="button"]:hover {
+    background-color: crimson; /* Button background color on hover */
+}
+
+.button-container {
+    display: flex;
+    justify-content: space-between;
+}
+
+a {
+    text-decoration: none;
+    color: #20255C; /* Link color */
+}
+
+a:hover {
+    text-decoration: none; /* Underline on hover */
+}
+
+.form-container {
+    width: 35%;
+    background-color: rgba(255, 255, 255, 0.6); /* White color with 0.6 opacity */
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2), 0px 6px 20px rgba(0, 0, 0, 0.19); /* Add shadow */
+
+}
+
+.qr-container {
+    position: absolute; /* Position QR container absolutely */
+    top: 0; /* Align to the top of the content container */
+    width: 50%; /* Set width for the QR container */
+    margin-left: 110%; /* Adjust margin-left for positioning */
+}
+
+form {
+    width: 100%; /* Take up full width of the form container */
+}
+
+.qr {
+    width: 300px; /* Ensure QR image fills the QR container */
+    height: auto; /* Maintain aspect ratio */
+}
+
+.wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.profile-image {
+    display: block;
+    margin: 0 auto 10px auto; /* Center the image */
+    border: 2px solid #fff; /* Add a white border */
+}
+
+.hell{
+    text-align: center;
+    margin-bottom: 2%;
+}
+
+.fixed-date-time {
+    position: fixed;
+    top: 2%; /* Adjust as needed */
+    right: 20px; /* Adjust as needed */
+    color: white;
+    font-size: 16px;
+    z-index: 1000;
+}
+
+.fixed-date-time p {
+    margin: 0;
+    padding: 0;
+}
+
+.fixed-date-time span {
+    font-weight: bold;
+}

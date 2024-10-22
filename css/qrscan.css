@@ -1,0 +1,133 @@
+.bg {
+    margin: 0;
+    padding: 0;
+    font-family: Century Gothic,CenturyGothic,AppleGothic,sans-serif; 
+    background-color: #F0F0FF; /* Set background color for demonstration */
+}
+
+.navbar {
+    background-color: #242c44; /* White color with 0.6 opacity */
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Navbar container */
+.navbar-container {
+    display: flex;
+    justify-content: space-between; /* Align items to the ends */
+    align-items: center;
+    width: 100%; /* Ensure the container spans the entire width */
+    padding: 0 20px; /* Add padding to create space */
+}
+
+/* Navbar heading */
+.navbar-heading {
+    color: black;
+    margin: 0;
+    margin-left: auto; /* Push the heading to the right */
+    text-decoration: none;
+    font-size: 20px;
+    border: 2px solid black;
+    padding: 2px;
+    font-weight: bold;
+}
+
+.logo {
+    height: 50px;
+    width: auto;
+}
+
+.secondary-navbar {
+    top: 0;
+    background-color: #242c44; /* White color with 0.6 opacity */
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    position: fixed;
+    width: 100%;
+}
+
+.secondary-navbar-item {
+    padding: 15px; /* Adjusted padding */
+    text-decoration: none;
+    color: white;
+    display: block; /* Changed display property to block */
+    border-left: 2px solid black;
+    border-radius: 15px;
+}
+
+.secondary-navbar-item:hover {
+    background-color: white; /* Set background color to gold on hover */
+    color: black; /* Set text color to black on hover */
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.secondary-navbar-item.active {
+    background-color: white; /* Set background color to gold on hover */
+    color: black; /* Set text color to black on hover */
+    font-weight: bold;
+}
+
+.content-container {
+    position: relative;
+    margin-top: 50px;
+    display: flex;
+    justify-content: center; /* Center contents horizontally */
+    align-items: center; /* Center contents vertically */
+    border-radius: 30px;
+    padding: 20px 20px 0 20px;
+    height: fit-content;
+    width: 97%;
+    font-family: 'Copperplate', 'Copperplate Gothic Light';
+    color: black;
+}
+
+.container-inner {
+    text-align: center; /* Center content horizontally within the container */
+}
+
+.rounded-circle {
+    border-radius: 50%;
+}
+
+.fixed-date-time {
+    position: fixed;
+    top: 15px; /* Adjust as needed */
+    right: 20px; /* Adjust as needed */
+    color: white;
+    font-size: 16px;
+    z-index: 1000;
+}
+
+.fixed-date-time p {
+    margin: 0;
+    padding: 0;
+}
+
+.fixed-date-time span {
+    font-weight: bold;
+}
+
+#toggle-camera-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #242c44; /* Dark background */
+    color: white; /* White text color */
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 1000; /* Ensure the button stays on top */
+    transition: background-color 0.3s ease;
+}
+
+#toggle-camera-btn:hover {
+    background-color: gold; /* Highlight on hover */
+    color: black;
+}
+

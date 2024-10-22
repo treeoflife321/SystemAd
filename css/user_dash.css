@@ -1,0 +1,242 @@
+.bg {
+    margin: 0;
+    padding: 0;
+    font-family: Century Gothic,CenturyGothic,AppleGothic,sans-serif; 
+    background-color:#F0F0FF;
+}
+
+.navbar {
+    background-color: #242c44; /* White color with 0.6 opacity */
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    top: 0;
+    color: white;
+}
+
+/* Navbar container */
+.navbar-container {
+    display: flex;
+    justify-content: flex-start; /* Align items to the ends */
+    width: 100%; /* Ensure the container spans the entire width */
+    padding: 0 20px; /* Add padding to create space */
+    margin-left: 2%;
+    align-items: center;
+}
+
+/* Navbar heading */
+.navbar-heading {
+    color: white;
+    margin: 0;
+    margin-left: auto; /* Push the heading to the right */
+    text-decoration: none;
+    font-size: 20px;
+    border: 1px solid white;
+    border-radius: 15px;
+    padding: 2px;
+    font-weight: bold;
+}
+
+.navbar-heading:hover{
+    background-color: gold;
+    color: #000;
+}
+
+.logo {
+    height: 50px;
+    width: auto;
+}
+
+.sidebar {
+    background-color: #242c44; /* White color with 0.6 opacity */
+    width: 220px;
+    padding: 20px 10px 20px 10px;
+    height: 100%;
+    font-size: 20px;
+    position: fixed;
+    color: white;
+}
+
+.sidebar-item {
+    padding: 10px 0; /* Adjusted padding */
+    border-bottom: 1px solid #F0F0FF;
+    text-decoration: none;
+    color: white;
+    display: block; /* Changed display property to block */
+    text-align: center;
+    border-radius: 15px;
+}
+
+.sidebar-item.active {
+    background-color: #F0F0FF;
+    color: black; /* Set text color to black */
+    font-weight: bold;
+    display: block; /* Changed display property to block */
+    padding: 10px 0; /* Adjusted padding */
+}
+
+.sidebar-item:hover {
+    background-color: #F0F0FF; /* Set background color to gold on hover */
+    color: black; /* Set text color to black on hover */
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.logout-btn {
+    margin-top: auto; /* Pushes the logout button to the bottom */
+    padding: 10px 0;
+    text-decoration: none;
+    color: white;
+    display: block;
+    text-align: center;
+    border-radius: 15px;
+    border-bottom: 1px solid #F0F0FF;
+}
+.logout-btn:hover {
+    background-color: crimson; /* Set background color to gold on hover */
+    color: black; /* Set text color to black on hover */
+    font-weight: bold;
+}
+
+.fixed-date-time {
+    position: absolute;
+    top: 2%; /* Adjust as needed */
+    right: 20px; /* Adjust as needed */
+    font-size: 16px;
+    z-index: 1000;
+    color: white;
+}
+
+.fixed-date-time p {
+    margin: 0;
+    padding: 0;
+}
+
+.fixed-date-time span {
+    font-weight: bold;
+}
+
+        /* Additional CSS for box styling */
+        .content-container {
+            margin-top: 30px;
+            margin-left: 270px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .box-container {
+            display: flex;
+            flex-direction: row; /* Align boxes in a row */
+            flex-wrap: wrap;
+            justify-content: flex-start; /* Align items to the left */
+        }
+
+        .box {
+            display: flex;
+            flex-direction: column;
+            width: 200px;
+            height: 120px;
+            margin: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            background-color: #004AAD;
+            position: relative;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2), 0px 6px 20px rgba(0, 0, 0, 0.19); /* Add shadow */
+        }
+
+        .box:hover {
+            box-shadow: 0 0 50px #002966; /* Deep blue */
+            transition: 0.3s;
+        }                                                    
+        
+        .box-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 80%;
+            margin-top: 6%;
+            margin-left: 3%;
+        }
+        
+        .box-icon {
+            width: 80px;
+            height: 80px;
+            margin: 10px;
+            display: inline-block;
+        }
+        
+        .box-icon img {
+            margin-top: 10px;
+            margin-left: 5px;
+            width: 60px; /* Adjusted icon size */
+            height: auto;
+        }
+        
+        .box-text {
+            display: inline-block;
+            vertical-align: top;
+            padding: 2px;
+            text-align: left;
+            color: black;
+            font-size: 17px;
+            font-weight: bold;
+        }
+        
+        .reserved-books {
+            background-color: #8dc6ff;
+        }
+
+        .borrowed-books {
+            background-color: #FF914D;
+        }
+
+        .overdued-books {
+            background-color: #FF5757;
+        }
+
+        .favorites {
+            background-color: #f5b553;
+        }
+
+        .pdf {
+            background-color: #D9F88D;
+        }
+
+        .checkin {
+            background-color: #72A084;
+        }
+
+        .box-link {
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            text-decoration: none;
+            font-size: 14px;
+            border-top: 1px solid black;
+        }
+        
+        .more-info-link {
+            position: absolute;
+            bottom: 3px; /* Adjust as needed */
+            left: 50%;
+            transform: translateX(-50%);
+            color: black;
+            text-decoration: none;
+            font-size: 14px;
+            border-top: 1px solid black;
+        }
+
+.profile-image {
+    display: block;
+    margin: 0 auto 10px auto; /* Center the image */
+    border: 2px solid #fff; /* Add a white border */
+}
+
+.hell{
+    text-align: center;
+    margin-bottom: 2%;
+}
+
+        
