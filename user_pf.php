@@ -272,36 +272,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             });
             </script>";
     } else {
-        // Prepare to update user information
-        $query = "UPDATE users SET info = ?, contact = ?, username = ?, user_type = ?";
+        // Initialize query and params array
+        $query = "UPDATE users SET info = ?, idnum = ?, contact = ?, username = ?, user_type = ?";
+        $params = [$info, $idnum, $contact, $username, $user_type];
+        $types = "sssss"; // String types for initial fields
 
         // Add password to query if it's set
         if (!empty($password)) {
             $query .= ", password = ?";
+            $params[] = $password;
+            $types .= "s"; // Add string type for password
         }
 
-        // Handle profile image upload
+        // Handle profile image upload if provided
         if (!empty($_FILES['profile_image']['name'])) {
             $profile_image = 'uploads/' . basename($_FILES['profile_image']['name']);
             move_uploaded_file($_FILES['profile_image']['tmp_name'], $profile_image);
             $query .= ", profile_image = ?";
+            $params[] = $profile_image;
+            $types .= "s"; // Add string type for profile image
         }
 
+        // Complete query with WHERE clause
         $query .= " WHERE uid = ?";
+        $params[] = $uid;
+        $types .= "i"; // Integer type for uid
 
         // Prepare the statement
         $stmt = $mysqli->prepare($query);
 
-        // Bind parameters based on conditions
-        if (!empty($password) && !empty($_FILES['profile_image']['name'])) {
-            $stmt->bind_param("sssssssi", $info, $idnum, $contact, $username, $user_type, $password, $profile_image, $uid);
-        } elseif (!empty($password)) {
-            $stmt->bind_param("ssssssi", $info, $idnum, $contact, $username, $user_type, $password, $uid);
-        } elseif (!empty($_FILES['profile_image']['name'])) {
-            $stmt->bind_param("ssssssi", $info, $idnum, $contact, $username, $user_type, $profile_image, $uid);
-        } else {
-            $stmt->bind_param("sssssi", $info, $idnum, $contact, $username, $user_type, $uid);
-        }
+        // Dynamically bind parameters
+        $stmt->bind_param($types, ...$params);
 
         // Execute the statement
         if ($stmt->execute()) {
