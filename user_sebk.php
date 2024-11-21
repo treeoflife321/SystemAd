@@ -52,12 +52,13 @@ if(isset($_GET['uid'])) {
     <link rel="icon" type="image/x-icon" href="css/pics/logop.png">
     <link rel="stylesheet" href="css/user_rsrv.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 </head>
 <body class="bg">
-<div class="navbar">
+<div class="navbar" style = "position: fixed; top: 0;">
         <div class="navbar-container">
             <img src="css/pics/logop.png" alt="Logo" class="logo">
-            <p style="margin-left: 7%;">EasyLib: Library User Experience and Management Through Integrated Monitoring Systems</p>
+            <p style="margin-left: 7%;">EasyLib</p>
         </div>
 </div>
 
@@ -136,6 +137,7 @@ if(isset($_GET['uid'])) {
     </table>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 <script>
     // Search functionality
 function searchTable() {

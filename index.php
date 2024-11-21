@@ -13,7 +13,7 @@
         <div class="navbar-container">
             <img src="css/pics/download.png" alt="Logo" class="logo" style="width:50px; height:50px;">
             <ul class="nav-links">
-                <li><a href="#">About Us</a></li>
+                <li><a href="about_us.html">About Us</a></li>
                 <li><a href="admin_login.php">Scanner Login</a></li>
             </ul>
         </div>

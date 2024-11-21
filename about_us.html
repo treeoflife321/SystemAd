@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="About Us Page">
+    <title>About Us</title>
+    <!-- Link to the external CSS file -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <header>
+        <!-- Creative Back Button with inline styling -->
+        <a href="javascript:history.back()" class="back-btn"> < Back </a>
+        
+        <h1>About Us</h1>
+        <!-- Meet the Developers button, positioned at the top-right corner -->
+        <a href="#team-section" class="meet-developers-btn">Meet the Developers</a>
+    </header>
+
+    <section id="about">
+        <h2>About the System</h2>
+        <p><b>EasyLib</b> is a library management system designed to enhance efficiency and user experience. It integrates key functions such as QR code scanning for attendance and book transactions, a convenient book reservation feature, attendance monitoring, real-time noise level monitoring, and comprehensive report generation. By simplifying processes and promoting a productive environment, EasyLib transforms traditional library systems into modern, user-focused solutions.</p>
+
+        <!-- Placeholder for Logo -->
+        <div class="logo-container">
+            <img src="css/pics/logop.png" alt="System Logo" class="system-logo">
+        </div>
+
+        <h2 id="team-section">Meet the Developers</h2>
+        <div class="team-section">
+            <!-- Team Member 1 -->
+            <div class="team-member">
+                <img src="css/pics/dipsy.png" alt="Scott Myckel D. Paurom">
+                <h3>Scott Myckel D. Paurom</h3>
+                <p><strong>Project Manager</strong></p>
+                <p><strong>Age:</strong> 23</p>
+                <p><strong>Address:</strong> Lower Jasaan, Jasaan Misamis Oriental</p>
+                <p><strong>Email:</strong> scottpaurom@gmail.com</p>
+                <p><strong>Contact Number:</strong> 09654005691</p>
+            </div>
+
+            <!-- Team Member 2 -->
+            <div class="team-member">
+                <img src="css/pics/lala.png" alt="Line Jen S. Llausas">
+                <h3>Line Jen S. Llausas</h3>
+                <p><strong>Lead Designer</strong></p>
+                <p><strong>Age:</strong> 21</p>
+                <p><strong>Address:</strong> San Nicolas, Jasaan Misamis Oriental</p>
+                <p><strong>Email:</strong> llausanlinejen18@gmail.coom</p>
+                <p><strong>Contact Number:</strong> 09930246083</p>
+            </div>
+
+            <!-- Team Member 3 -->
+            <div class="team-member">
+                <img src="css/pics/po.png" alt="Arah U. Fernandez">
+                <h3>Arah U. Fernandez</h3>
+                <p><strong>Database Manager</strong></p>
+                <p><strong>Age:</strong> 22</p>
+                <p><strong>Address:</strong> Brgy 3, Balingasag Misamis Oriental</p>
+                <p><strong>Email:</strong> arahubafernandez@gmail.com</p>
+                <p><strong>Contact Number:</strong> 09381418228</p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2024 EasyLib. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Smooth scroll functionality for "Meet the Developers" link
+        document.querySelector(".meet-developers-btn").addEventListener("click", function(event) {
+            event.preventDefault();
+            document.querySelector("#team-section").scrollIntoView({ behavior: "smooth" });
+        });
+    </script>
+
+</body>
+</html>

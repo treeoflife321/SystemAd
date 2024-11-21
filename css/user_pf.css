@@ -54,11 +54,11 @@
     background-color: #242c44; /* White color with 0.6 opacity */
     width: 220px;
     padding: 20px 10px 20px 10px;
-    height: 100%;
+    height: 100vh;
     font-size: 20px;
     position: fixed;
     color: white;
-    top: 73px;
+    top: 66px;
 }
 
 .sidebar-item {
@@ -111,12 +111,12 @@
     justify-content: flex-start; /* Align items to the start */
     align-items: center;
     position: fixed;
-    top: 70px; /* Adjusted to be below the navbar */
+    top: 60px; /* Adjusted to be below the navbar */
     width: 100%;
     border-bottom: 2px solid black;
     z-index: 999; /* Ensure it's below the main navbar */
     border-radius: 15px;
-    margin-left: 240px;
+    margin-left: 220px;
 }
 
 .secondary-navbar-item {

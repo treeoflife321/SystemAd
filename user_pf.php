@@ -76,12 +76,13 @@ $stmt->close();
     <link rel="stylesheet" href="css/user_pf.css">
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.7/dist/sweetalert2.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.7/dist/sweetalert2.all.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 </head>
 <body class="bg">
-<div class="navbar">
+<div class="navbar" style = "position: fixed; top: 0;">
         <div class="navbar-container">
             <img src="css/pics/logop.png" alt="Logo" class="logo">
-            <p style="margin-left: 7%;">EasyLib: Library User Experience and Management Through Integrated Monitoring Systems</p>
+            <p style="margin-left: 7%;">EasyLib</p>
         </div>
 </div>
 
@@ -163,7 +164,7 @@ $stmt->close();
             </div>
         </div>
     </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
     <script>
         function validateForm() {
@@ -272,36 +273,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             });
             </script>";
     } else {
-        // Prepare to update user information
-        $query = "UPDATE users SET info = ?, contact = ?, username = ?, user_type = ?";
+        // Initialize query and params array
+        $query = "UPDATE users SET info = ?, idnum = ?, contact = ?, username = ?, user_type = ?";
+        $params = [$info, $idnum, $contact, $username, $user_type];
+        $types = "sssss"; // String types for initial fields
 
         // Add password to query if it's set
         if (!empty($password)) {
             $query .= ", password = ?";
+            $params[] = $password;
+            $types .= "s"; // Add string type for password
         }
 
-        // Handle profile image upload
+        // Handle profile image upload if provided
         if (!empty($_FILES['profile_image']['name'])) {
             $profile_image = 'uploads/' . basename($_FILES['profile_image']['name']);
             move_uploaded_file($_FILES['profile_image']['tmp_name'], $profile_image);
             $query .= ", profile_image = ?";
+            $params[] = $profile_image;
+            $types .= "s"; // Add string type for profile image
         }
 
+        // Complete query with WHERE clause
         $query .= " WHERE uid = ?";
+        $params[] = $uid;
+        $types .= "i"; // Integer type for uid
 
         // Prepare the statement
         $stmt = $mysqli->prepare($query);
 
-        // Bind parameters based on conditions
-        if (!empty($password) && !empty($_FILES['profile_image']['name'])) {
-            $stmt->bind_param("sssssssi", $info, $idnum, $contact, $username, $user_type, $password, $profile_image, $uid);
-        } elseif (!empty($password)) {
-            $stmt->bind_param("ssssssi", $info, $idnum, $contact, $username, $user_type, $password, $uid);
-        } elseif (!empty($_FILES['profile_image']['name'])) {
-            $stmt->bind_param("ssssssi", $info, $idnum, $contact, $username, $user_type, $profile_image, $uid);
-        } else {
-            $stmt->bind_param("sssssi", $info, $idnum, $contact, $username, $user_type, $uid);
-        }
+        // Dynamically bind parameters
+        $stmt->bind_param($types, ...$params);
 
         // Execute the statement
         if ($stmt->execute()) {

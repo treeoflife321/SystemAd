@@ -183,7 +183,7 @@ $total_checkins = getTotalCheckins($uid, $mysqli);
     <nav class="navbar">
         <div class="navbar-container">
             <img src="css/pics/logop.png" alt="Logo" class="logo">
-            <p style="margin-left: 7%;">EasyLib: Library User Experience and Management Through Integrated Monitoring Systems</p>
+            <p style="margin-left: 7%;">EasyLib</p>
         </div>
     </nav>
 
