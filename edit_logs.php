@@ -53,7 +53,7 @@ if(isset($_GET['id'])) {
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (isset($_POST['timeout_update']) && $_POST['timeout_update'] == 'true') {
         // Handle timeout update request
-        $current_time = date("h:i:s A");
+        $current_time = date("g:i:s A");
 
         // Update timeout in the database
         $query = "UPDATE chkin SET timeout=? WHERE id=?";

@@ -103,9 +103,9 @@ if (isset($_POST['delete_reservation'])) {
     <div class="search-bar">
         <input type="text" id="searchInfo" placeholder="Search user info">
         <input type="text" id="searchTitle" placeholder="Search book title">
-        <label for="start-date" style="color: white;">From:</label>
+        <label for="start-date">From:</label>
             <input type="date" id="startDate" name="start_date" placeholder="Start Date">
-        <label for="end-date" style="color: white;">To:</label>
+        <label for="end-date">To:</label>
             <input type="date" id="endDate" name="end_date" placeholder="End Date">
         <button type="button" onclick="searchTable()">Search</button>
     </div>

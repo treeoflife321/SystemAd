@@ -394,5 +394,43 @@ function editBook(id) {
         updateTime(); // Call the function to update time immediately
         setInterval(updateTime, 1000); // Update time every second
     </script>
+
+<?php
+class ChkinHandler {
+    private $pdo;
+
+    public function __construct($pdo) {
+        $this->pdo = $pdo;
+    }
+
+    public function updateIdnumIfEmpty($data) {
+        // Check if idnum is empty in the provided data
+        if (empty($data['idnum'])) {
+            $stmt = $this->pdo->prepare("
+                SELECT idnum 
+                FROM chkin 
+                WHERE info = ? AND idnum IS NOT NULL 
+                ORDER BY id DESC 
+                LIMIT 1
+            ");
+            $stmt->execute([$data['info']]);
+            $match = $stmt->fetch();
+
+            // If a matching idnum is found, update the idnum for the new entry
+            if ($match) {
+                $updateStmt = $this->pdo->prepare("
+                    UPDATE chkin 
+                    SET idnum = :idnum 
+                    WHERE id = :id
+                ");
+                $updateStmt->execute([
+                    ':idnum' => $match['idnum'],
+                    ':id' => $data['id'] // Ensure you pass the correct ID of the new row
+                ]);
+            }
+        }
+    }
+}
+?>
 </body>
 </html>

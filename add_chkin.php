@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Get the current date and time
     $currentDate = date("m-d-Y");
-    $currentTime = date("h:i:s A");
+    $currentTime = date("g:i:s A");
 
     // Prepare the SQL statement to insert data
     $query = "INSERT INTO chkin (info, user_type, date, timein, purpose) VALUES (?, ?, ?, ?, ?)";

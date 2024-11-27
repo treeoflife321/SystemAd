@@ -8,35 +8,167 @@ function checkAdminSession() {
 
 // Call the function at the top of your files
 checkAdminSession();
-?>
 
-<?php
 // Include database connection
 include 'config.php';
 
 // Check if 'aid' parameter is present in the URL
-if(isset($_GET['aid'])) {
+if (isset($_GET['aid'])) {
     $aid = $_GET['aid'];
+
     // Query to fetch the username corresponding to the aid
     $query = "SELECT username FROM admin WHERE aid = ?";
     $stmt = $mysqli->prepare($query);
     $stmt->bind_param("i", $aid);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     // Check if the result is not empty
     if ($result && $result->num_rows > 0) {
         $admin = $result->fetch_assoc();
         $admin_username = $admin['username'];
-        // Display the admin username in the sidebar
         $admin_username_display = $admin_username;
     } else {
-        // Display a default message if admin username is not found
         $admin_username_display = "Username";
     }
-    // Close statement
     $stmt->close();
 }
+
+// Function to update `idnum` if empty
+function updateIdnumIfEmpty($mysqli) {
+    $currentDate = date("m-d-Y");
+
+    // Fetch all rows for the current date
+    $query = "SELECT id, info FROM chkin WHERE date = ? AND idnum = '' ";
+    $stmt = $mysqli->prepare($query);
+    if (!$stmt) {
+        error_log("Error preparing statement: " . $mysqli->error);
+        return;
+    }
+    $stmt->bind_param("s", $currentDate);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    // Check for rows with empty idnum
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $info = $row['info'];
+            $id = $row['id'];
+
+            // Find the most recent non-empty idnum for the same info
+            $subQuery = "
+                SELECT idnum 
+                FROM chkin 
+                WHERE info = ? AND idnum IS NOT NULL 
+                ORDER BY id ASC
+                LIMIT 1
+            ";
+            $subStmt = $mysqli->prepare($subQuery);
+            if (!$subStmt) {
+                error_log("Error preparing sub-statement: " . $mysqli->error);
+                continue;
+            }
+            $subStmt->bind_param("s", $info);
+            $subStmt->execute();
+            $subResult = $subStmt->get_result();
+
+            if ($subResult->num_rows > 0) {
+                $match = $subResult->fetch_assoc();
+                $idnum = $match['idnum'];
+
+                // Update the current row with the found idnum
+                $updateQuery = "UPDATE chkin SET idnum = ? WHERE id = ?";
+                $updateStmt = $mysqli->prepare($updateQuery);
+                if (!$updateStmt) {
+                    error_log("Error preparing update statement: " . $mysqli->error);
+                    continue;
+                }
+                $updateStmt->bind_param("si", $idnum, $id);
+                if (!$updateStmt->execute()) {
+                    error_log("Error executing update statement: " . $mysqli->error);
+                }
+                $updateStmt->close();
+            }
+            $subStmt->close();
+        }
+    } else {
+        error_log("No rows found with empty idnum for the current date.");
+    }
+
+    $stmt->close();
+}
+
+// Function to update `user_type` if empty
+function updateUserTypeIfEmpty($mysqli) {
+    $currentDate = date("m-d-Y");
+
+    // Fetch all rows for the current date with empty user_type
+    $query = "SELECT id, info FROM chkin WHERE date = ? AND (user_type = '' OR user_type IS NULL)";
+    $stmt = $mysqli->prepare($query);
+    if (!$stmt) {
+        error_log("Error preparing statement: " . $mysqli->error);
+        return;
+    }
+    $stmt->bind_param("s", $currentDate);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    // Check for rows with empty user_type
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $info = $row['info'];
+            $id = $row['id'];
+
+            // Find the most recent non-empty user_type for the same info
+            $subQuery = "
+                SELECT user_type 
+                FROM chkin 
+                WHERE info = ? AND (user_type IS NOT NULL AND user_type != '') 
+                ORDER BY id ASC
+                LIMIT 1
+            ";
+            $subStmt = $mysqli->prepare($subQuery);
+            if (!$subStmt) {
+                error_log("Error preparing sub-statement: " . $mysqli->error);
+                continue;
+            }
+            $subStmt->bind_param("s", $info);
+            $subStmt->execute();
+            $subResult = $subStmt->get_result();
+
+            if ($subResult->num_rows > 0) {
+                $match = $subResult->fetch_assoc();
+                $user_type = $match['user_type'];
+
+                // Update the current row with the found user_type
+                $updateQuery = "UPDATE chkin SET user_type = ? WHERE id = ?";
+                $updateStmt = $mysqli->prepare($updateQuery);
+                if (!$updateStmt) {
+                    error_log("Error preparing update statement: " . $mysqli->error);
+                    continue;
+                }
+                $updateStmt->bind_param("si", $user_type, $id);
+                if (!$updateStmt->execute()) {
+                    error_log("Error executing update statement: " . $mysqli->error);
+                }
+                $updateStmt->close();
+            }
+            $subStmt->close();
+        }
+    } else {
+        error_log("No rows found with empty user_type for the current date.");
+    }
+
+    $stmt->close();
+}
+
+// Call the function to handle empty `user_type`
+updateUserTypeIfEmpty($mysqli);
+
+
+// Call the function to handle empty `idnum`
+updateIdnumIfEmpty($mysqli);
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -172,8 +304,8 @@ function addUserPopup() {
                    <option value="Research">Research</option>
                    <option value="Printing">Printing</option>
                    <option value="Clearance">Clearance</option>
-                   <option value="Borrow">Borrow</option>
-                   <option value="Return">Return</option>
+                   <option value="Borrow">Borrow Book(s)</option>
+                   <option value="Return">Return Book(s)</option>
                </select>`,
         focusConfirm: false,
         preConfirm: () => {

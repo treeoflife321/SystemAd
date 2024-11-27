@@ -162,9 +162,9 @@ if (isset($_POST['delete_reservation'])) {
             <option value="Cancelled">Canceled</option>
         </select>
         <br>
-        <label for="start_date" style="color:white;">From:</label>
+        <label for="start_date">From:</label>
         <input type="date" name="start_date" placeholder="Start Date">
-        <label for="end_date" style="color:white;">To:</label>
+        <label for="end_date">To:</label>
         <input type="date" name="end_date" placeholder="End Date">
         <?php if(isset($aid)) echo '<input type="hidden" name="aid" value="'.$aid.'">'; ?>
         <button type="submit"><i class="fas fa-search"></i> Search</button>
