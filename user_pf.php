@@ -123,8 +123,22 @@ $stmt->close();
                     <label for="idnum"></label>
                     <input type="text" id="idnum" name="idnum" placeholder="ID Number" value="<?php echo htmlspecialchars($user['idnum']); ?>" required><br>
                     
+                    <label for="year_level">Year Level:</label>
+                    <input type="text" id="year_level" name="year_level" placeholder="Year Level" value="<?php echo htmlspecialchars($user['year_level']); ?>" required><br>
+
                     <label for="contact"></label>
                     <input type="text" id="contact" name="contact" placeholder="Contact Number" value="<?php echo htmlspecialchars($user['contact']); ?>" required><br>
+
+                    <label for="birthdate">Birthdate:</label>
+                    <input type="date" id="birthdate" name="birthdate" value="<?php echo htmlspecialchars($user['birthdate']); ?>" required><br>
+
+                    <label for="gender">Gender:</label>
+                    <select id="gender" name="gender" required>
+                        <option value="">Choose Gender</option>
+                        <option value="Male" <?php if ($user['gender'] == 'Male') echo 'selected'; ?>>Male</option>
+                        <option value="Female" <?php if ($user['gender'] == 'Female') echo 'selected'; ?>>Female</option>
+                        <option value="Non-Binary" <?php if ($user['gender'] == 'Non-Binary') echo 'selected'; ?>>Non-Binary</option>
+                    </select><br><br>
 
                     <label for="username"></label>
                     <input type="text" id="username" name="username" placeholder="Username" value="<?php echo htmlspecialchars($user['username']); ?>" required><br>
@@ -133,7 +147,7 @@ $stmt->close();
                     <input type="password" id="password" name="password" placeholder="New Password"><br>
 
                     <label for="repeat_password"></label>
-                    <input type="password" id="repeat_password" name="repeat_password" placeholder="Repeat Password"><br>
+                    <input type="password" id="repeat_password" name="repeat_password" placeholder="Repeat Password">
 
                     <label for="user_type"></label>
                     <center>
@@ -255,6 +269,7 @@ $stmt->close();
 <?php
 // Process form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Retrieve form data
     $info = $_POST['qr-info'];
     $idnum = $_POST['idnum'];
     $contact = $_POST['contact'];
@@ -262,6 +277,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user_type = $_POST['user_type'];
     $password = $_POST['password'];
     $repeat_password = $_POST['repeat_password'];
+    $year_level = $_POST['year_level'];
+    $birthdate = $_POST['birthdate']; 
+    $gender = $_POST['gender']; 
 
     // Check if passwords match
     if ($password !== $repeat_password) {
@@ -274,11 +292,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </script>";
     } else {
         // Initialize query and params array
-        $query = "UPDATE users SET info = ?, idnum = ?, contact = ?, username = ?, user_type = ?";
-        $params = [$info, $idnum, $contact, $username, $user_type];
-        $types = "sssss"; // String types for initial fields
+        $query = "UPDATE users SET info = ?, idnum = ?, contact = ?, username = ?, user_type = ?, year_level = ?, birthdate = ?, gender = ?";
+        $params = [$info, $idnum, $contact, $username, $user_type, $year_level, $birthdate, $gender];
+        $types = "ssssssss"; // String types for the fields
 
-        // Add password to query if it's set
+        // Add password to query if it's set and not empty
         if (!empty($password)) {
             $query .= ", password = ?";
             $params[] = $password;
@@ -287,11 +305,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Handle profile image upload if provided
         if (!empty($_FILES['profile_image']['name'])) {
-            $profile_image = 'uploads/' . basename($_FILES['profile_image']['name']);
-            move_uploaded_file($_FILES['profile_image']['tmp_name'], $profile_image);
-            $query .= ", profile_image = ?";
-            $params[] = $profile_image;
-            $types .= "s"; // Add string type for profile image
+            $imageFileType = strtolower(pathinfo($_FILES['profile_image']['name'], PATHINFO_EXTENSION));
+            $allowedTypes = ['jpg', 'jpeg', 'png', 'gif'];
+
+            // Check if file is an allowed image type
+            if (in_array($imageFileType, $allowedTypes)) {
+                $profile_image = 'uploads/' . uniqid() . '.' . $imageFileType;
+                move_uploaded_file($_FILES['profile_image']['tmp_name'], $profile_image);
+                $query .= ", profile_image = ?";
+                $params[] = $profile_image;
+                $types .= "s"; // Add string type for profile image
+            } else {
+                echo "<script>
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Invalid Image Type',
+                        text: 'Only JPG, JPEG, PNG, and GIF files are allowed.',
+                    });
+                    </script>";
+            }
         }
 
         // Complete query with WHERE clause

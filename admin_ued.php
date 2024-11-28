@@ -112,8 +112,22 @@ if (isset($_GET['uid'])) {
             <label for="idnum"></label>
             <input type="text" id="idnum" name="idnum" placeholder="ID Number" value="<?php echo htmlspecialchars($user['idnum']); ?>" required><br>
             
+            <label for="year_level"></label>
+            <input type="text" id="year_level" name="year_level" placeholder="Year Level" value="<?php echo htmlspecialchars($user['year_level']); ?>" required><br>
+
             <label for="contact"></label>
             <input type="text" id="contact" name="contact" placeholder="Contact Number" value="<?php echo htmlspecialchars($user['contact']); ?>" required><br>
+
+            <label for="birthdate"></label>
+            <input type="date" id="birthdate" name="birthdate" value="<?php echo htmlspecialchars($user['birthdate']); ?>" required><br>
+
+            <label for="gender"></label>
+            <select id="gender" name="gender" required>
+                <option value="">Choose Gender</option>
+                <option value="Male" <?php if ($user['gender'] == 'Male') echo 'selected'; ?>>Male</option>
+                <option value="Female" <?php if ($user['gender'] == 'Female') echo 'selected'; ?>>Female</option>
+                <option value="Non-Binary" <?php if ($user['gender'] == 'Non-Binary') echo 'selected'; ?>>Non-Binary</option>
+            </select><br>
 
             <label for="username"></label>
             <input type="text" id="username" name="username" placeholder="Username" value="<?php echo htmlspecialchars($user['username']); ?>" required><br>
@@ -125,30 +139,25 @@ if (isset($_GET['uid'])) {
             <input type="password" id="repeat_password" name="repeat_password" placeholder="Repeat Password"><br>
 
             <label for="user_type"></label>
-            <center>
             <select id="user_type" name="user_type">
                 <option value="">Choose User Type</option>
                 <option value="Student" <?php if ($user['user_type'] == 'Student') echo 'selected'; ?>>Student</option>
                 <option value="Faculty" <?php if ($user['user_type'] == 'Faculty') echo 'selected'; ?>>Faculty</option>
                 <option value="Staff" <?php if ($user['user_type'] == 'Staff') echo 'selected'; ?>>Staff</option>
             </select><br>
-            </center>
 
             <label for="status"></label>
-            <center>
-                <select id="status" name="status">
-                    <option value="Pending" <?php if ($user['status'] == 'Pending') echo 'selected'; ?>>Pending</option>
-                    <option value="Active" <?php if ($user['status'] == 'Active') echo 'selected'; ?>>Active</option>
-                    <option value="Disabled" <?php if ($user['status'] == 'Disabled') echo 'selected'; ?>>Disabled</option>
-                </select><br>
-            </center>
+            <select id="status" name="status">
+                <option value="Pending" <?php if ($user['status'] == 'Pending') echo 'selected'; ?>>Pending</option>
+                <option value="Active" <?php if ($user['status'] == 'Active') echo 'selected'; ?>>Active</option>
+                <option value="Disabled" <?php if ($user['status'] == 'Disabled') echo 'selected'; ?>>Disabled</option>
+            </select><br>
 
-            <label for="profile_image">Profile Image (Optional)</label>
+            <label for="profile_image">Profile Image (Optional)</label><center>
             <input type="file" id="profile_image" name="profile_image" accept="image/*" onchange="previewImage(event)"><br>
-            <center>
-            <img id="image_preview" src="<?php echo !empty($user['profile_image']) ? htmlspecialchars($user['profile_image']) : ''; ?>" style="display: <?php echo !empty($user['profile_image']) ? 'block' : 'none'; ?>; width: 200px; height: 200px; object-fit: cover; margin-top: 10px;">
-            </center>
-            <br>
+            <img id="image_preview" src="<?php echo !empty($user['profile_image']) ? htmlspecialchars($user['profile_image']) : ''; ?>" 
+                 style="display: <?php echo !empty($user['profile_image']) ? 'block' : 'none'; ?>; width: 200px; height: 200px; object-fit: cover; margin-top: 10px;"><br>
+                 </center>
             <div class="button-container">
                 <button style="width: 100px; background-color:green;" type="submit">Save</button>
                 <a href="admin_users.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>"><button style="width: 100px; background-color:red;" type="button">Cancel</button></a>
@@ -227,6 +236,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $idnum = $_POST['idnum'];
     $contact = $_POST['contact'];
     $username = $_POST['username'];
+    $year_level = $_POST['year_level'];
+    $gender = $_POST['gender'];
+    $birthdate = $_POST['birthdate'];
     $user_type = $_POST['user_type'];
     $status = $_POST['status'];
     $password = $_POST['password'];
@@ -243,35 +255,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </script>";
     } else {
         // Prepare to update user information
-        $query = "UPDATE users SET info = ?, idnum = ?, contact = ?, username = ?, user_type = ?, status = ?";
-
-        // Add password to query if it's set
+        $query = "UPDATE users SET info = ?, idnum = ?, contact = ?, username = ?, year_level = ?, gender = ?, birthdate = ?, user_type = ?, status = ?";
         if (!empty($password)) {
             $query .= ", password = ?";
         }
-
-        // Handle profile image upload
         if (!empty($_FILES['profile_image']['name'])) {
             $profile_image = 'uploads/' . basename($_FILES['profile_image']['name']);
             move_uploaded_file($_FILES['profile_image']['tmp_name'], $profile_image);
             $query .= ", profile_image = ?";
         }
-
         $query .= " WHERE uid = ?";
 
-        // Prepare the statement
         $stmt = $mysqli->prepare($query);
 
         // Bind parameters based on conditions
-        if (!empty($password) && !empty($_FILES['profile_image']['name'])) {
-            $stmt->bind_param("ssssssssi", $info, $idnum, $contact, $username, $user_type, $status, $password, $profile_image, $uid);
-        } elseif (!empty($password)) {
-            $stmt->bind_param("sssssssi", $info, $idnum, $contact, $username, $user_type, $status, $password, $uid);
-        } elseif (!empty($_FILES['profile_image']['name'])) {
-            $stmt->bind_param("sssssssi", $info, $idnum, $contact, $username, $user_type, $status, $profile_image, $uid);
-        } else {
-            $stmt->bind_param("ssssssi", $info, $idnum, $contact, $username, $user_type, $status, $uid);
-        }
+        $params = [$info, $idnum, $contact, $username, $year_level, $gender, $birthdate, $user_type, $status];
+        if (!empty($password)) $params[] = $password;
+        if (!empty($profile_image)) $params[] = $profile_image;
+        $params[] = $uid;
+
+        $stmt->bind_param(str_repeat("s", count($params) - 1) . "i", ...$params);
 
         // Execute the statement
         if ($stmt->execute()) {
@@ -279,7 +282,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 Swal.fire({
                     icon: 'success',
                     title: 'Profile Updated',
-                    text: 'Your profile has been updated successfully.',
+                    text: 'User details updated successfully!',
                 }).then(function() {
                     window.location = 'admin_users.php?aid=$aid';
                 });
@@ -289,12 +292,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 Swal.fire({
                     icon: 'error',
                     title: 'Update Failed',
-                    text: 'There was an error updating your profile.',
+                    text: 'There was an error updating the user details.',
                 });
                 </script>";
         }
-
-        // Close statement
         $stmt->close();
     }
 }

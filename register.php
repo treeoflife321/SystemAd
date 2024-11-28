@@ -20,8 +20,38 @@
                 <label for="idnum"></label>
                 <input type="text" id="idnum" name="idnum" placeholder="ID Number" required><br>
 
+                <label></label>
+                <center>
+                    <select id="year_level" name="year_level" required>
+                        <option value="">Choose Year Level</option>
+                        <option value="1st Year">1st Year</option>
+                        <option value="2nd Year">2nd Year</option>
+                        <option value="3rd Year">3rd Year</option>
+                        <option value="4th Year">4th Year</option>
+                        <option value="5th Year">5th Year</option>
+                        <option value="Not Applicable">Not Applicable</option>
+                    </select><br>
+                </center>
+
                 <label for="contact"></label>
                 <input type="text" id="contact" name="contact" placeholder="Contact Number" required><br>
+
+                <label for="birthdate">Birthdate</label>
+                <input type="date" id="birthdate" name="birthdate" placeholder="Birthdate" required><br>
+
+                <label>Gender:</label><br>
+                <center>
+                    <div style="display: inline-flex; align-items: center; gap: 20px;">
+                        <input type="radio" id="male" name="gender" value="Male" required>
+                        <label for="male">Male</label>
+
+                        <input type="radio" id="female" name="gender" value="Female" required>
+                        <label for="female">Female</label>
+
+                        <input type="radio" id="nonbinary" name="gender" value="Non-Binary" required>
+                        <label for="nonbinary">Non-Binary</label>
+                    </div>
+                </center>
 
                 <label for="username"></label>
                 <input type="text" id="username" name="username" placeholder="Username" required><br>
@@ -43,7 +73,7 @@
                 </center>
 
                 <label for="profile_image">Profile Image</label>
-                <input type="file" id="profile_image" name="profile_image" accept="image/*" onchange="previewImage(event)" required><br>
+                <input type="file" id="profile_image" name="profile_image" accept="image/*" onchange="previewImage(event)"><br>
                 <center>
                 <img id="image_preview" style="display: none; max-width: 100%; margin-top: 10px;">
                 </center>
@@ -56,11 +86,9 @@
         <div class="qr-scanner-container">
             <video id="qr-video" width="360px" style="margin-left: 20px;"></video>
             <p class="qr-code-text">Scan ID QR Code</p>
+            <button id="switch-camera" style="cursor:pointer; margin-left: 140px; padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px;">Switch Camera</button>
         </div>
     </div>
-
-    <!-- Switch Camera Button -->
-    <button id="switch-camera" style="position: absolute; bottom: 10px; right: 10px; padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px;">Switch Camera</button>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.7/dist/sweetalert2.all.min.js"></script>
     <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
@@ -131,11 +159,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $idnum = $_POST['idnum'];
     $user_type = $_POST['user_type'];
     $status = 'Pending';
+    $birthdate = $_POST['birthdate'];
+    $gender = $_POST['gender'];
+    $year_level = $_POST['year_level'];
 
+    // Check if passwords match
     if ($password !== $repeat_password) {
         $alertMessage = "Passwords do not match. Please try again.";
         echo "<script>Swal.fire({icon: 'error', title: 'Error', text: '{$alertMessage}'});</script>";
     } else {
+        // Check for existing username
         $check_query = "SELECT * FROM users WHERE username = ?";
         $check_stmt = $mysqli->prepare($check_query);
         $check_stmt->bind_param("s", $username);
@@ -150,7 +183,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $target_dir = "uploads/";
                 $target_file = $target_dir . basename($_FILES["profile_image"]["name"]);
 
-                // Resize image to 200x200
+                // Resize and validate image
                 $image = $_FILES['profile_image']['tmp_name'];
                 $img_info = getimagesize($image);
                 $img_type = $img_info[2];
@@ -187,9 +220,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 imagedestroy($dst_img);
 
                 if (file_exists($target_file)) {
-                    $insert_query = "INSERT INTO users (contact, username, password, info, idnum, user_type, profile_image, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                    $insert_query = "INSERT INTO users (contact, username, password, info, idnum, user_type, profile_image, status, birthdate, gender, year_level) 
+                                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                     $insert_stmt = $mysqli->prepare($insert_query);
-                    $insert_stmt->bind_param("ssssssss", $contact, $username, $password, $qr_info, $idnum, $user_type, $target_file, $status);
+                    $insert_stmt->bind_param("sssssssssss", $contact, $username, $password, $qr_info, $idnum, $user_type, $target_file, $status, $birthdate, $gender, $year_level);
 
                     if ($insert_stmt->execute()) {
                         $alertMessage = "Registration successful.";

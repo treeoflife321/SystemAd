@@ -61,9 +61,9 @@ $course_counts = [
     "BSMET" => 0
 ];
 
-$query = "SELECT info, user_type, COUNT(*) as count FROM chkin";
+$query = "SELECT info, user_type, COUNT(*) as count FROM chkin WHERE archived = ' '";
 if ($start_date && $end_date) {
-    $query .= " WHERE STR_TO_DATE(`date`, '%m-%d-%Y') BETWEEN STR_TO_DATE(?, '%Y-%m-%d') AND STR_TO_DATE(?, '%Y-%m-%d')";
+    $query .= " AND STR_TO_DATE(`date`, '%m-%d-%Y') BETWEEN STR_TO_DATE(?, '%Y-%m-%d') AND STR_TO_DATE(?, '%Y-%m-%d')";
 }
 $query .= " GROUP BY info, user_type";
 $stmt = $mysqli->prepare($query);
@@ -145,7 +145,13 @@ $total_users = array_sum($user_counts);
 @media print {
     @page {
         size: A4 landscape; /* A4 paper in landscape mode */
-        margin: 0mm 45mm 0mm 0mm; /* Adjust margins as needed */
+        margin: 5mm; /* Reduced margins for more content space */
+    }
+
+    body {
+        background-color: white !important;
+        margin: 0 !important;
+        font-size: 12px; /* Reduce font size for print */
     }
 
     .sidebar, .fixed-date-time, .search-bar, .print-button, .secondary-navbar {
@@ -153,45 +159,54 @@ $total_users = array_sum($user_counts);
     }
 
     .content-container {
-        padding: 0 !important; /* Remove padding for printing */
+        padding: 0 !important;
+        margin: 0 !important;
     }
 
     .chart-container {
         display: flex !important;
         flex-wrap: nowrap !important;
         justify-content: center !important; /* Center the charts */
-        align-items: center; /* Vertically align the charts */
         padding: 0 !important;
-        margin: 0 !important;
         background-color: white !important;
-        max-width: 100%; /* Ensure no overflow */
-        overflow: hidden; /* Remove the scrollbar */
+        width: 100%;
+        overflow: hidden;
     }
 
     .chart {
-        width: 45%; /* Adjust to fit both charts side by side */
-        max-width: 380px; /* Ensure the charts fit side by side */
-        height: auto; /* Maintain aspect ratio */
-        margin: 0 10px; /* Add margin between charts */
+        width: 100% !important; /* Reduced width to fit on one page */
+        height: 300px !important; /* Reduce height to fit content */
+        margin: 0 10px !important; /* Margin between charts */
     }
 
     .chart-counts {
         display: block !important;
         color: black !important;
         text-align: center;
-    }
-
-    body {
-        background-color: white !important;
-        justify-content: center !important;
-        margin: 0 !important;
+        font-size: 12px; /* Reduce font size */
     }
 
     #date-range-heading {
         text-align: center;
         width: 100%;
         margin: 0;
-        padding: 10px 0;
+        padding: 5px 0; /* Reduce padding */
+    }
+
+    .header img {
+        width: 100%; /* Adjust to ensure the image fits */
+        max-width: 600px; /* Limit the max width */
+        height: auto;
+    }
+
+    h2 {
+        font-size: 14px !important; /* Reduce heading size */
+        text-align: center;
+        margin: 10px 0 !important;
+    }
+
+    .chart-container div {
+        margin-bottom: 20px; /* Reduce margin */
     }
 }
 </style>
@@ -256,6 +271,9 @@ $total_users = array_sum($user_counts);
 
         <div style="background-color: white; width:96%; border-radius: 20px; padding: 10px; margin-top:10px;">
         <div id="date-range-heading">
+                <header class="header"><center>
+            <img src="css/pics/ustp-header.png" alt="USTP Header" class="ustp-header">
+        </header></center>    
             <?php
             if ($start_date && $end_date) {
                 echo "<h2>Library Users from " . date("F j, Y", strtotime($start_date)) . " to " . date("F j, Y", strtotime($end_date)) . "</h2>";

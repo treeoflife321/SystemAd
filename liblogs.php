@@ -249,34 +249,41 @@ if ($result === false) {
 </script>
 
     <script>
-        function printData() {
-        var startDate = document.getElementById("start-date").value;
-        var endDate = document.getElementById("end-date").value;
-        var heading = "<h2>Library users ";
-        if (startDate && endDate) {
-            // Convert dates to mm-dd-yyyy format
-            startDate = formatDate(startDate);
-            endDate = formatDate(endDate);
-            heading += "From " + startDate + " to " + endDate;
-        } else {
-            heading += "for All Dates";
-        }
-        heading += "</h2>";
-        var table = document.getElementById("dataTable").cloneNode(true); // Clone the table
-        var headerRow = table.querySelector("thead tr"); // Get the header row
-        headerRow.deleteCell(headerRow.cells.length - 1); // Remove the last cell from the header row
-
-        var rows = table.querySelectorAll("tbody tr"); // Get all data rows
-        rows.forEach(function(row) {
-            row.deleteCell(row.cells.length - 1); // Remove the last cell from each row
-        });
-
-        var printContents = heading + table.outerHTML; // Get the outer HTML of the modified table
-        var originalContents = document.body.innerHTML;
-        document.body.innerHTML = printContents;
-        window.print();
-        document.body.innerHTML = originalContents;
+function printData() {
+    var startDate = document.getElementById("start-date").value;
+    var endDate = document.getElementById("end-date").value;
+    var heading = "<h2>Library Users ";
+    if (startDate && endDate) {
+        // Convert dates to "Month Day, Year" format
+        startDate = formatReadableDate(startDate);
+        endDate = formatReadableDate(endDate);
+        heading += "from " + startDate + " to " + endDate;
+    } else {
+        heading += "for All Dates";
     }
+    heading += "</h2>";
+    
+    var table = document.getElementById("dataTable").cloneNode(true); // Clone the table
+    var headerRow = table.querySelector("thead tr"); // Get the header row
+    headerRow.deleteCell(headerRow.cells.length - 1); // Remove the last cell from the header row
+
+    var rows = table.querySelectorAll("tbody tr"); // Get all data rows
+    rows.forEach(function(row) {
+        row.deleteCell(row.cells.length - 1); // Remove the last cell from each row
+    });
+
+    var printContents = heading + table.outerHTML; // Get the outer HTML of the modified table
+    var originalContents = document.body.innerHTML;
+    document.body.innerHTML = printContents;
+    window.print();
+    document.body.innerHTML = originalContents;
+}
+
+function formatReadableDate(date) {
+    var d = new Date(date);
+    var options = { year: 'numeric', month: 'long', day: 'numeric' }; // Format: "Month Day, Year"
+    return d.toLocaleDateString('en-US', options);
+}
 
     function formatDate(date) {
     var d = new Date(date);

@@ -91,9 +91,39 @@ if (isset($_GET['aid'])) {
 
                 <label for="idnum"></label>
                 <input type="text" id="idnum" name="idnum" placeholder="ID Number" required><br>
-                
+
+                <label></label>
+                <center>
+                    <select id="year_level" name="year_level" required>
+                        <option value="">Choose Year Level</option>
+                        <option value="1st Year">1st Year</option>
+                        <option value="2nd Year">2nd Year</option>
+                        <option value="3rd Year">3rd Year</option>
+                        <option value="4th Year">4th Year</option>
+                        <option value="5th Year">5th Year</option>
+                        <option value="Not Applicable">Not Applicable</option>
+                    </select><br>
+                </center>
+
                 <label for="contact"></label>
                 <input type="text" id="contact" name="contact" placeholder="Contact Number" required><br>
+
+                <label for="birthdate">Birthdate</label>
+                <input type="date" id="birthdate" name="birthdate" placeholder="Birthdate" required><br>
+
+                <label>Gender:</label><br>
+                <center>
+                    <div style="display: inline-flex; align-items: center; gap: 20px;">
+                        <input type="radio" id="male" name="gender" value="Male" required>
+                        <label for="male">Male</label>
+
+                        <input type="radio" id="female" name="gender" value="Female" required>
+                        <label for="female">Female</label>
+
+                        <input type="radio" id="nonbinary" name="gender" value="Non-Binary" required>
+                        <label for="nonbinary">Non-Binary</label>
+                    </div>
+                </center>
 
                 <label for="username"></label>
                 <input type="text" id="username" name="username" placeholder="Username" required><br>
@@ -204,6 +234,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $qr_info = $_POST['qr-info'];
     $idnum = $_POST['idnum'];
     $user_type = $_POST['user_type'];
+    $year_level = $_POST['year_level']; 
+    $birthdate = $_POST['birthdate'];    
+    $gender = $_POST['gender'];         
     $status = 'Pending';
 
     if ($password !== $repeat_password) {
@@ -286,9 +319,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 }
             }
 
-            $insert_query = "INSERT INTO users (contact, username, password, info, idnum, user_type, profile_image, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            // Updated query with all additional fields
+            $insert_query = "INSERT INTO users (contact, username, password, info, idnum, user_type, year_level, birthdate, gender, profile_image, status) 
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $insert_stmt = $mysqli->prepare($insert_query);
-            $insert_stmt->bind_param("ssssssss", $contact, $username, $password, $qr_info, $idnum, $user_type, $profile_image_path, $status);
+            $insert_stmt->bind_param("sssssssssss", $contact, $username, $password, $qr_info, $idnum, $user_type, $year_level, $birthdate, $gender, $profile_image_path, $status);
 
             if ($insert_stmt->execute()) {
                 $alertMessage = "Registration successful.";
@@ -305,6 +340,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 ?>
+
 </body>
 <script>
         function updateTime() {

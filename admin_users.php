@@ -68,10 +68,9 @@ if (isset($_POST['delete_uid'])) {
 if (isset($_POST['action']) && isset($_POST['checked_uids'])) {
     $action = $_POST['action'];
     $checked_uids = explode(',', $_POST['checked_uids']);
-    $status = ($action == 'activate') ? 'Active' : 'Disabled';
+    $status = ($action === 'activate') ? 'Active' : 'Disabled';
 
-    // Check if checked_uids is an array and not empty
-    if (is_array($checked_uids) && count($checked_uids) > 0) {
+    if (!empty($checked_uids)) {
         // Prepare the placeholders for the IN clause
         $placeholders = implode(',', array_fill(0, count($checked_uids), '?'));
 
@@ -79,7 +78,7 @@ if (isset($_POST['action']) && isset($_POST['checked_uids'])) {
         $query = "UPDATE users SET status = ? WHERE uid IN ($placeholders)";
         $stmt = $mysqli->prepare($query);
 
-        // Bind parameters (status first, followed by each uid)
+        // Bind parameters
         $types = str_repeat('i', count($checked_uids));
         $stmt->bind_param("s" . $types, $status, ...$checked_uids);
 
@@ -87,27 +86,26 @@ if (isset($_POST['action']) && isset($_POST['checked_uids'])) {
             // Update successful
             echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@10'></script>"; // Include SweetAlerts library
             echo "<script>
-                    document.addEventListener('DOMContentLoaded', function () {
-                        Swal.fire({
-                            title: 'Success!',
-                            text: 'The status has been updated successfully.',
-                            icon: 'success'
-                        }).then(() => {
-                            window.location.href = 'admin_users.php?aid=$aid';
-                        });
+            document.addEventListener('DOMContentLoaded', function () {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'The status has been updated successfully.',
+                        icon: 'success'
+                    }).then(() => {
+                        window.location.href = 'admin_users.php?aid=$aid';
                     });
+                });
                   </script>";
         } else {
-            // Update failed
             echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@10'></script>"; // Include SweetAlerts library
             echo "<script>
-                    document.addEventListener('DOMContentLoaded', function () {
-                        Swal.fire({
-                            title: 'Error!',
-                            text: 'Failed to update status.',
-                            icon: 'error'
-                        });
+            document.addEventListener('DOMContentLoaded', function () {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Failed to update status.',
+                        icon: 'error'
                     });
+                });
                   </script>";
         }
         $stmt->close();
@@ -183,24 +181,39 @@ if (isset($_POST['action']) && isset($_POST['checked_uids'])) {
     </div>
     
 <div class="content-container">
-    <div class="search-bar">
+<div class="search-bar">
     <h1 style="color: black;">Search User Accounts</h1>
-        <input type="text" id="searchInput" placeholder="Search by Info or Username...">
-        <select id="userTypeFilter">
-            <option value="">All User Types</option>
-            <option value="Student">Student</option>
-            <option value="Faculty">Faculty</option>
-            <option value="Staff">Staff</option>
-        </select>
-        <select id="statusFilter">
-            <option value="">All Statuses</option>
-            <option value="Active">Active</option>
-            <option value="Pending">Pending</option>
-            <option value="Disabled">Disabled</option>
-        </select>
-        <button type="button" onclick="applyFilters()">Search</button>
-        <button type="button" onclick="clearFilters()">Clear</button>
-    </div>
+    
+    <!-- General search by info or username -->
+    <input type="text" id="searchInput" placeholder="Search by Info or Username...">
+    
+    <!-- Specific filters -->
+    <input type="text" id="idNumberFilter" placeholder="Search by ID Number...">
+    <input type="text" id="yearLevelFilter" placeholder="Search by Year Level...">
+    <select id="genderFilter">
+        <option value="">All Genders</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Non-Binary">Non-Binary</option>
+    </select>
+    <select id="userTypeFilter">
+        <option value="">All User Types</option>
+        <option value="Student">Student</option>
+        <option value="Faculty">Faculty</option>
+        <option value="Staff">Staff</option>
+    </select>
+    <select id="statusFilter">
+        <option value="">All Statuses</option>
+        <option value="Active">Active</option>
+        <option value="Pending">Pending</option>
+        <option value="Disabled">Disabled</option>
+    </select>
+    
+    <!-- Search and clear buttons -->
+    <button type="button" onclick="applyFilters()">Search</button>
+    <button type="button" onclick="clearFilters()">Clear</button>
+</div>
+
     <a href="admin_adu.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="add-lib"><i class='fas fa-plus'></i> Add User</a>
 
     <div class="table-actions">
@@ -214,6 +227,9 @@ if (isset($_POST['action']) && isset($_POST['checked_uids'])) {
                 <th>#</th>
                 <th>User Info</th>
                 <th>ID #</th>
+                <th>Year Level</th>
+                <th>Birthdate</th>
+                <th>Gender</th>
                 <th>Contact #</th>
                 <th>Username</th>
                 <th>User Type</th>
@@ -238,6 +254,9 @@ if (isset($_POST['action']) && isset($_POST['checked_uids'])) {
                 echo "<td>" . $counter++ . "</td>";
                 echo "<td>" . $row['info'] . "</td>";
                 echo "<td>" . $row['idnum'] . "</td>";
+                echo "<td>" . $row['year_level'] . "</td>";
+                echo "<td>" . $row['birthdate'] . "</td>";
+                echo "<td>" . $row['gender'] . "</td>";
                 echo "<td>" . $row['contact'] . "</td>";
                 echo "<td>" . $row['username'] . "</td>";
                 echo "<td>" . $row['user_type'] . "</td>";
@@ -319,9 +338,11 @@ function uncheckAll() {
     }
 }
 
-// Function to apply filters
 function applyFilters() {
-    var input = document.getElementById("searchInput").value.toLowerCase();
+    var generalInput = document.getElementById("searchInput").value.toLowerCase();
+    var idNumber = document.getElementById("idNumberFilter").value.toLowerCase();
+    var yearLevel = document.getElementById("yearLevelFilter").value.toLowerCase();
+    var gender = document.getElementById("genderFilter").value;
     var userType = document.getElementById("userTypeFilter").value;
     var status = document.getElementById("statusFilter").value;
     var tableBody = document.getElementById("userTableBody");
@@ -329,11 +350,21 @@ function applyFilters() {
 
     for (var i = 0; i < rows.length; i++) {
         var info = rows[i].getElementsByTagName("td")[1].textContent.toLowerCase();
-        var username = rows[i].getElementsByTagName("td")[3].textContent.toLowerCase();
-        var type = rows[i].getElementsByTagName("td")[4].textContent;
-        var rowStatus = rows[i].getElementsByTagName("td")[5].textContent;
+        var idNum = rows[i].getElementsByTagName("td")[2].textContent.toLowerCase();
+        var year = rows[i].getElementsByTagName("td")[3].textContent.toLowerCase();
+        var genderValue = rows[i].getElementsByTagName("td")[5].textContent;
+        var type = rows[i].getElementsByTagName("td")[8].textContent;
+        var rowStatus = rows[i].getElementsByTagName("td")[9].textContent;
 
-        if ((info.includes(input) || username.includes(input)) && (userType === "" || type === userType) && (status === "" || rowStatus === status)) {
+        // Apply all filters
+        if (
+            (info.includes(generalInput) || idNum.includes(generalInput)) &&
+            (idNumber === "" || idNum.includes(idNumber)) &&
+            (yearLevel === "" || year.includes(yearLevel)) &&
+            (gender === "" || genderValue === gender) &&
+            (userType === "" || type === userType) &&
+            (status === "" || rowStatus === status)
+        ) {
             rows[i].style.display = "";
         } else {
             rows[i].style.display = "none";
@@ -341,9 +372,11 @@ function applyFilters() {
     }
 }
 
-// Function to clear filters
 function clearFilters() {
     document.getElementById("searchInput").value = "";
+    document.getElementById("idNumberFilter").value = "";
+    document.getElementById("yearLevelFilter").value = "";
+    document.getElementById("genderFilter").value = "";
     document.getElementById("userTypeFilter").value = "";
     document.getElementById("statusFilter").value = "";
     applyFilters();
@@ -351,29 +384,36 @@ function clearFilters() {
 
 // Function to update status
 function updateStatus(action) {
-    var checkboxes = document.getElementsByName('user_check[]');
+    // Get all rows in the table body
+    var tableBody = document.getElementById("userTableBody");
+    var rows = tableBody.getElementsByTagName("tr");
     var checkedUids = [];
 
-    for (var checkbox of checkboxes) {
-        if (checkbox.checked) {
-            checkedUids.push(checkbox.value);
+    for (var i = 0; i < rows.length; i++) {
+        // Check if the row is visible (not filtered out)
+        if (rows[i].style.display !== "none") {
+            // Find the checkbox in the row
+            var checkbox = rows[i].querySelector('input[name="user_check[]"]');
+            if (checkbox && checkbox.checked) {
+                // Add the value (user ID) to the array
+                checkedUids.push(checkbox.value);
+            }
         }
     }
 
-    if (checkedUids.length === 0) {
+    if (checkedUids.length > 0) {
+        // Set the action and checked user IDs in the form
+        document.getElementById("statusAction").value = action;
+        document.getElementById("checkedUids").value = checkedUids.join(",");
+        document.getElementById("statusForm").submit();
+    } else {
         Swal.fire({
             title: 'Error!',
-            text: 'No user selected.',
+            text: 'No users selected or visible for the update.',
             icon: 'error'
         });
-        return;
     }
-
-    document.getElementById('statusAction').value = action;
-    document.getElementById('checkedUids').value = checkedUids.join(',');
-    document.getElementById('statusForm').submit();
 }
-
 
 // Dropdown script
 function toggleDropdown(event) {
