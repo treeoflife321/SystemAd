@@ -31,6 +31,8 @@ if(isset($_GET['id'])) {
         $entry = $result->fetch_assoc();
         $info = $entry['info'];
         $idnum = $entry['idnum'];
+        $year_level = $entry['year_level'];
+        $gender = $entry['gender'];
         $user_type = $entry['user_type'];
         $date = $entry['date'];
         $time_in = $entry['timein'];
@@ -79,15 +81,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Handle regular form submission
         $info = $_POST['info'];
         $idnum = $_POST['idnum'];
+        $year_level = $_POST['year_level'];
+        $gender = $_POST['gender'];
         $user_type = $_POST['user_type'];
         $date = $_POST['date'];
         $time_in = $_POST['time_in'];
         $purpose = $_POST['purpose'];
 
         // Update entry in the database except for the timeout field
-        $query = "UPDATE chkin SET info=?, idnum = ?, user_type=?, date=?, timein=?, purpose=? WHERE id=?";
+        $query = "UPDATE chkin SET info=?, idnum = ?, user_type=?, date=?, timein=?, purpose=?, year_level=?, gender=? WHERE id=?";
         $stmt = $mysqli->prepare($query);
-        $stmt->bind_param("ssssssi", $info, $idnum, $user_type, $date, $time_in, $purpose, $id);
+        $stmt->bind_param("ssssssssi", $info, $idnum, $user_type, $date, $time_in, $purpose, $year_level, $gender, $id);
         $stmt->execute();
 
         // Check if the update was successful
@@ -149,6 +153,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <option value="Visitor" <?php if ($user_type === "Visitor") echo "selected"; ?>>Visitor</option>
             </select><br>
             </center>
+
+            <label for="year_level">Year Level:</label>
+            <input type="text" id="year_level" name="year_level" value="<?php echo $year_level; ?>"><br>
+
+            <label for="gender">Gender:</label>
+            <input type="text" id="gender" name="gender" value="<?php echo $gender; ?>"><br>
 
             <label for="date">Date:</label>
             <input type="text" id="date" name="date" value="<?php echo $date; ?>" readonly><br>

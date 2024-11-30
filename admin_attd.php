@@ -162,13 +162,145 @@ function updateUserTypeIfEmpty($mysqli) {
     $stmt->close();
 }
 
+// Function to update `year_level` if empty
+function updateYearLevelIfEmpty($mysqli) {
+    $currentDate = date("m-d-Y");
+
+    // Fetch all rows for the current date with empty year_level
+    $query = "SELECT id, info FROM chkin WHERE date = ? AND (year_level = '' OR year_level IS NULL)";
+    $stmt = $mysqli->prepare($query);
+    if (!$stmt) {
+        error_log("Error preparing statement: " . $mysqli->error);
+        return;
+    }
+    $stmt->bind_param("s", $currentDate);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    // Check for rows with empty year_level
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $info = $row['info'];
+            $id = $row['id'];
+
+            // Find the most recent non-empty year_level for the same info
+            $subQuery = "
+                SELECT year_level 
+                FROM chkin 
+                WHERE info = ? AND (year_level IS NOT NULL AND year_level != '') 
+                ORDER BY id ASC
+                LIMIT 1
+            ";
+            $subStmt = $mysqli->prepare($subQuery);
+            if (!$subStmt) {
+                error_log("Error preparing sub-statement: " . $mysqli->error);
+                continue;
+            }
+            $subStmt->bind_param("s", $info);
+            $subStmt->execute();
+            $subResult = $subStmt->get_result();
+
+            if ($subResult->num_rows > 0) {
+                $match = $subResult->fetch_assoc();
+                $year_level = $match['year_level'];
+
+                // Update the current row with the found year_level
+                $updateQuery = "UPDATE chkin SET year_level = ? WHERE id = ?";
+                $updateStmt = $mysqli->prepare($updateQuery);
+                if (!$updateStmt) {
+                    error_log("Error preparing update statement: " . $mysqli->error);
+                    continue;
+                }
+                $updateStmt->bind_param("si", $year_level, $id);
+                if (!$updateStmt->execute()) {
+                    error_log("Error executing update statement: " . $mysqli->error);
+                }
+                $updateStmt->close();
+            }
+            $subStmt->close();
+        }
+    } else {
+        error_log("No rows found with empty year_level for the current date.");
+    }
+
+    $stmt->close();
+}
+
+// Function to update `gender` if empty
+function updateGenderIfEmpty($mysqli) {
+    $currentDate = date("m-d-Y");
+
+    // Fetch all rows for the current date with empty gender
+    $query = "SELECT id, info FROM chkin WHERE date = ? AND (gender = '' OR gender IS NULL)";
+    $stmt = $mysqli->prepare($query);
+    if (!$stmt) {
+        error_log("Error preparing statement: " . $mysqli->error);
+        return;
+    }
+    $stmt->bind_param("s", $currentDate);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    // Check for rows with empty gender
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $info = $row['info'];
+            $id = $row['id'];
+
+            // Find the most recent non-empty gender for the same info
+            $subQuery = "
+                SELECT gender 
+                FROM chkin 
+                WHERE info = ? AND (gender IS NOT NULL AND gender != '') 
+                ORDER BY id ASC
+                LIMIT 1
+            ";
+            $subStmt = $mysqli->prepare($subQuery);
+            if (!$subStmt) {
+                error_log("Error preparing sub-statement: " . $mysqli->error);
+                continue;
+            }
+            $subStmt->bind_param("s", $info);
+            $subStmt->execute();
+            $subResult = $subStmt->get_result();
+
+            if ($subResult->num_rows > 0) {
+                $match = $subResult->fetch_assoc();
+                $gender = $match['gender'];
+
+                // Update the current row with the found gender
+                $updateQuery = "UPDATE chkin SET gender = ? WHERE id = ?";
+                $updateStmt = $mysqli->prepare($updateQuery);
+                if (!$updateStmt) {
+                    error_log("Error preparing update statement: " . $mysqli->error);
+                    continue;
+                }
+                $updateStmt->bind_param("si", $gender, $id);
+                if (!$updateStmt->execute()) {
+                    error_log("Error executing update statement: " . $mysqli->error);
+                }
+                $updateStmt->close();
+            }
+            $subStmt->close();
+        }
+    } else {
+        error_log("No rows found with empty gender for the current date.");
+    }
+
+    $stmt->close();
+}
+
 // Call the function to handle empty `user_type`
 updateUserTypeIfEmpty($mysqli);
-
 
 // Call the function to handle empty `idnum`
 updateIdnumIfEmpty($mysqli);
 
+// Call the function to handle empty `year_level`
+updateYearLevelIfEmpty($mysqli);
+
+// Call the function to handle empty `gender`
+updateGenderIfEmpty($mysqli);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -248,7 +380,7 @@ updateIdnumIfEmpty($mysqli);
         if ($result && $result->num_rows > 0) {
             echo '<table id="dataTable">';
             echo '<thead>';
-            echo '<tr><th>#</th><th>User Info</th><th>ID Number</th><th>User Type</th><th>Date</th><th>Time In</th><th>Time Out</th><th>Purpose</th><th>Edit:</th></tr>';
+            echo '<tr><th>#</th><th>User Info</th><th>ID Number</th><th>User Type</th><th>Year Level</th><th>Gender</th><th>Date</th><th>Time In</th><th>Time Out</th><th>Purpose</th><th>Edit:</th></tr>';
             echo '</thead>';
             echo '<tbody id="dataTableBody">'; // Added id to tbody
 
@@ -262,6 +394,8 @@ updateIdnumIfEmpty($mysqli);
                 echo '<td>' . $row['info'] . '</td>';
                 echo '<td>' . $row['idnum'] . '</td>';
                 echo '<td>' . $row['user_type'] . '</td>';
+                echo '<td>' . $row['year_level'] . '</td>';
+                echo '<td>' . $row['gender'] . '</td>';
                 echo '<td>' . $row['date'] . '</td>';
                 echo '<td>' . $row['timein'] . '</td>';
                 echo '<td>' . ($row['timeout'] ? $row['timeout'] : 'N/A') . '</td>';

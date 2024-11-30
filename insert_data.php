@@ -33,20 +33,24 @@ if (isset($_POST['info']) && isset($_POST['date']) && isset($_POST['timein']) &&
             $profile_image = 'uploads/default.jpg';
             $user_type = '';
             $idnum = '';
+            $gender = '';
+            $year_level = '';
 
             // Check the users table for a matching info
-            $user_query = "SELECT profile_image, user_type, idnum FROM users WHERE info = ?";
+            $user_query = "SELECT profile_image, user_type, idnum, gender, year_level FROM users WHERE info = ?";
             $user_stmt = $mysqli->prepare($user_query);
             $user_stmt->bind_param("s", $info);
             $user_stmt->execute();
             $user_result = $user_stmt->get_result();
 
             if ($user_result && $user_result->num_rows > 0) {
-                // Match found, fetch profile_image, user_type, and idnum
+                // Match found, fetch profile_image, user_type, idnum, gender, and year_level
                 $user = $user_result->fetch_assoc();
                 $profile_image = $user['profile_image'];
                 $user_type = $user['user_type'];
                 $idnum = $user['idnum'];
+                $gender = $user['gender'];
+                $year_level = $user['year_level'];
             }
 
             // Now update the timeout
@@ -58,8 +62,8 @@ if (isset($_POST['info']) && isset($_POST['date']) && isset($_POST['timein']) &&
                 // Set success message after updating timeout
                 $response['success'] = true;
                 $response['message'] = "Time-out recorded successfully!";
-                $response['info'] = $info; // Include the scanned info in the response
-                $response['profile_image'] = $profile_image; // Include the profile image
+                $response['info'] = $info;
+                $response['profile_image'] = $profile_image;
             } else {
                 // Set error message if execution fails
                 $response['message'] = "Timeout update failed: " . $update_stmt->error;
@@ -88,7 +92,7 @@ echo json_encode($response);
 // Function to handle new check-ins
 function insertNewCheckin($mysqli, $info, $date, $timein, $purpose, &$response) {
     // Check the users table for a matching info
-    $user_query = "SELECT profile_image, user_type, idnum FROM users WHERE info = ?";
+    $user_query = "SELECT profile_image, user_type, idnum, gender, year_level FROM users WHERE info = ?";
     $user_stmt = $mysqli->prepare($user_query);
     $user_stmt->bind_param("s", $info);
     $user_stmt->execute();
@@ -96,31 +100,35 @@ function insertNewCheckin($mysqli, $info, $date, $timein, $purpose, &$response) 
 
     // Set default values
     $profile_image = 'uploads/default.jpg'; // Default image
-    $user_type = ''; 
+    $user_type = '';
     $idnum = '';
+    $gender = '';
+    $year_level = '';
 
     if ($user_result && $user_result->num_rows > 0) {
-        // Match found, fetch profile_image, user_type, and idnum
+        // Match found, fetch profile_image, user_type, idnum, gender, and year_level
         $user = $user_result->fetch_assoc();
         $profile_image = $user['profile_image'];
         $user_type = $user['user_type'];
         $idnum = $user['idnum'];
+        $gender = $user['gender'];
+        $year_level = $user['year_level'];
     }
 
-    // Insert the data into the "chkin" table, including the idnum and purpose
-    $query = "INSERT INTO chkin (info, date, timein, user_type, purpose, idnum) VALUES (?, ?, ?, ?, ?, ?)";
+    // Insert the data into the "chkin" table, including the new columns
+    $query = "INSERT INTO chkin (info, date, timein, user_type, purpose, idnum, gender, year_level) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     $stmt = $mysqli->prepare($query);
 
     if ($stmt) {
         // Bind parameters to the statement
-        $stmt->bind_param("ssssss", $info, $date, $timein, $user_type, $purpose, $idnum);
+        $stmt->bind_param("ssssssss", $info, $date, $timein, $user_type, $purpose, $idnum, $gender, $year_level);
 
         // Execute the statement
         if ($stmt->execute()) {
             // Set success message
             $response['success'] = true;
             $response['message'] = "Welcome to the Library!";
-            $response['info'] = $info; // Include the scanned info in the response
+            $response['info'] = $info;
             $response['profile_image'] = $profile_image;
         } else {
             // Set error message if execution fails

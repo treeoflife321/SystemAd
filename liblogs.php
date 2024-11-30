@@ -73,6 +73,9 @@ $user_type = isset($_GET['user_type']) ? $_GET['user_type'] : '';
 $start_date = isset($_GET['start_date']) ? $_GET['start_date'] : '';
 $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : '';
 $purpose = isset($_GET['purpose']) ? $_GET['purpose'] : '';
+$idnum = isset($_GET['idnum']) ? $_GET['idnum'] : '';
+$year_level = isset($_GET['year_level']) ? $_GET['year_level'] : '';
+$gender = isset($_GET['gender']) ? $_GET['gender'] : '';
 
 // Modify the query to include only archived entries
 $query = "SELECT * FROM chkin WHERE archived = ''";
@@ -94,6 +97,15 @@ if(!empty($end_date)) {
 }   
 if(!empty($purpose)) {
     $query .= " AND purpose = '" . $mysqli->real_escape_string($purpose) . "'";
+}
+if (!empty($idnum)) {
+    $query .= " AND idnum LIKE '%" . $mysqli->real_escape_string($idnum) . "%'";
+}
+if (!empty($year_level)) {
+    $query .= " AND year_level = '" . $mysqli->real_escape_string($year_level) . "'";
+}
+if (!empty($gender)) {
+    $query .= " AND gender = '" . $mysqli->real_escape_string($gender) . "'";
 }
 
 // Execute the query
@@ -168,6 +180,7 @@ if ($result === false) {
     <div class="search-inputs">
                     <label for="search"></label>
                     <input type="text" id="search" name="search" value="<?php echo $search; ?>" placeholder="Search by Info">
+                    <input type="text" id="idnum" name="idnum" value="<?php echo isset($_GET['idnum']) ? $_GET['idnum'] : ''; ?>" placeholder="ID Number">
                     <select name="user_type">
                         <option value="" <?php if(empty($user_type)) echo "selected"; ?>>User Type:</option>
                         <option value="Student" <?php if($user_type == "Student") echo "selected"; ?>>Student</option>
@@ -175,6 +188,22 @@ if ($result === false) {
                         <option value="Visitor" <?php if($user_type == "Visitor") echo "selected"; ?>>Visitor</option>
                         <option value="Staff" <?php if($user_type == "Staff") echo "selected"; ?>>Staff</option>
                     </select>
+                    <select name="year_level">
+                        <option value="" <?php if(empty($year_level)) echo "selected"; ?>>Year Level:</option>
+                        <option value="1st Year" <?php if($year_level == "1st Year") echo "selected"; ?>>1st Year</option>
+                        <option value="2nd Year" <?php if($year_level == "2nd Year") echo "selected"; ?>>2nd Year</option>
+                        <option value="3rd Year" <?php if($year_level == "3rd Year") echo "selected"; ?>>3rd Year</option>
+                        <option value="4th Year" <?php if($year_level == "4th Year") echo "selected"; ?>>4th Year</option>
+                        <option value="5th Year" <?php if($year_level == "5th Year") echo "selected"; ?>>5th Year</option>
+                        <option value="Not Applicable" <?php if($year_level == "Not Applicable") echo "selected"; ?>>Not Applicable</option>
+                    </select>
+                    <select name="gender">
+                        <option value="" <?php if(empty($gender)) echo "selected"; ?>>Gender:</option>
+                        <option value="Male" <?php if($gender == "Male") echo "selected"; ?>>Male</option>
+                        <option value="Female" <?php if($gender == "Female") echo "selected"; ?>>Female</option>
+                        <option value="Non-Binary" <?php if($gender == "Non-Binary") echo "selected"; ?>>Non-Binary</option>
+                    </select>
+                    <br>
                     <label for="start-date">From:</label>
                     <input type="date" id="start-date" name="start_date" value="<?php echo $start_date; ?>">
                     <label for="end-date">To:</label>
@@ -198,7 +227,7 @@ if ($result === false) {
         if ($result && $result->num_rows > 0) {
             echo '<table id="dataTable">';
             echo '<thead>';
-            echo '<tr><th>#</th><th>User Info</th><th>ID Number</th><th>User Type</th><th>Date</th><th>Time In</th><th>Time Out</th><th>Purpose</th><th colspan="2">Actions</th></tr>';
+            echo '<tr><th>#</th><th>User Info</th><th>ID Number</th><th>User Type</th><th>Year Level</th><th>Gender</th><th>Date</th><th>Time In</th><th>Time Out</th><th>Purpose</th><th colspan="2">Actions</th></tr>';
             echo '</thead>';
             echo '<tbody id="dataTableBody">';
 
@@ -212,6 +241,8 @@ if ($result === false) {
                 echo '<td>' . $row['info'] . '</td>';
                 echo '<td>' . $row['idnum'] . '</td>';
                 echo '<td>' . $row['user_type'] . '</td>';
+                echo '<td>' . $row['year_level'] . '</td>';
+                echo '<td>' . $row['gender'] . '</td>';
                 echo '<td>' . $row['date'] . '</td>';
                 echo '<td>' . $row['timein'] . '</td>';
                 echo '<td>' . ($row['timeout'] ? $row['timeout'] : 'N/A') . '</td>';
