@@ -58,11 +58,10 @@ $currentFile = getCurrentFileName();
         }
         ?>
         <a href="admin_dash.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Dashboard</a>
-        <a href="admin_pf.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Profile</a>
+        <a href="admin_pf.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Credentials</a>
         <a href="admin_srch.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Accounts</a>
         <a href="admin_attd.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Library Logs</a>
         <a href="admin_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Statistics</a>
-        <a href="admin_wres.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Walk-in-Borrow</a>
         <a href="admin_preq.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Pending Requests</a>
         <a href="admin_brel.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Borrowed Books</a>
         <a href="admin_ob.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Overdue Books</a>
@@ -177,10 +176,10 @@ $currentFile = getCurrentFileName();
                 <input type="text" id="additional_info" name="additional_info" placeholder="Enter additional information"><br>
 
                 <div class="button-container" style="margin-top:3%;">
-                    <!-- Add Asset button -->
-                    <button style="width: 100px;" type="submit">Add Asset</button>
                     <!-- Cancel button -->
                     <a href="admin_asts_inv.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>"><button style="width: 100px; background-color:red;" type="button">Cancel</button></a>
+                    <!-- Add Asset button -->
+                    <button style="width: 100px;" type="submit">Add Asset</button>
                 </div>
             </form>
         </div>

@@ -80,6 +80,7 @@ if(isset($_POST['id'])) {
 // Initialize search parameters
 $search = isset($_GET['search']) ? $_GET['search'] : '';
 $user_type = isset($_GET['user_type']) ? $_GET['user_type'] : '';
+$course = isset($_GET['course']) ? $_GET['course'] : '';
 $start_date = isset($_GET['start_date']) ? $_GET['start_date'] : '';
 $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : '';
 $purpose = isset($_GET['purpose']) ? $_GET['purpose'] : '';
@@ -93,6 +94,9 @@ $query = "SELECT * FROM chkin WHERE archived = ''";
 // Add conditions to the query based on search parameters
 if(!empty($search)) {
     $query .= " AND info LIKE '%" . $mysqli->real_escape_string($search) . "%'";
+}
+if(!empty($course)) {
+    $query .= " AND info LIKE '%" . $mysqli->real_escape_string($course) . "%'";
 }
 if(!empty($user_type)) {
     $query .= " AND user_type = '" . $mysqli->real_escape_string($user_type) . "'";
@@ -132,7 +136,7 @@ if ($result === false) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Library Logs</title>
     <link rel="icon" type="image/x-icon" href="css/pics/logop.png">
-    <link rel="stylesheet" href="css/admin_srch.css">
+    <link rel="stylesheet" href="../css/admin_srch.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
@@ -154,7 +158,6 @@ if ($result === false) {
         <a href="admin_pf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Profile</a>
         <a href="admin_attd.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item active">Library Logs</a>
         <a href="admin_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Statistics</a>
-        <a href="admin_wres.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Walk-in-Borrow</a>
         <a href="admin_preq.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Pending Requests</a>
         <a href="admin_brel.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Borrowed Books</a>
         <a href="admin_ob.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Overdue Books</a>
@@ -197,6 +200,14 @@ if ($result === false) {
                         <option value="Visitor" <?php if($user_type == "Visitor") echo "selected"; ?>>Visitor</option>
                         <option value="Staff" <?php if($user_type == "Staff") echo "selected"; ?>>Staff</option>
                     </select>
+                    <select name="course">
+                        <option value="" <?php if(empty($course)) echo "selected"; ?>>Course:</option>
+                        <option value="BSESM" <?php if($course == "BSESM") echo "selected"; ?>>BSESM</option>
+                        <option value="BSIT" <?php if($course == "BSIT") echo "selected"; ?>>BSIT</option>
+                        <option value="BSMET" <?php if($course == "BSMET") echo "selected"; ?>>BSMET</option>
+                        <option value="BSNAME" <?php if($course == "BSNAME") echo "selected"; ?>>BSNAME</option>
+                        <option value="BSTCM" <?php if($course == "BSTCM") echo "selected"; ?>>BSTCM</option>
+                    </select>
                     <select name="year_level">
                         <option value="" <?php if(empty($year_level)) echo "selected"; ?>>Year Level:</option>
                         <option value="1st Year" <?php if($year_level == "1st Year") echo "selected"; ?>>1st Year</option>
@@ -212,7 +223,6 @@ if ($result === false) {
                         <option value="Female" <?php if($gender == "Female") echo "selected"; ?>>Female</option>
                         <option value="Non-Binary" <?php if($gender == "Non-Binary") echo "selected"; ?>>Non-Binary</option>
                     </select>
-                    <br>
                     <label for="start-date">From:</label>
                     <input type="date" id="start-date" name="start_date" value="<?php echo $start_date; ?>">
                     <label for="end-date">To:</label>
@@ -228,7 +238,7 @@ if ($result === false) {
                     </select>
                     <?php if(isset($aid)) echo '<input type="hidden" name="aid" value="'.$aid.'">'; ?>
                     <button type="submit"><i class="fas fa-search"></i> Search</button>
-                    <button type="button" onclick="clearForm()">Clear</button>
+                    <button type="button" onclick="clearForm()"><i class="fa-regular fa-circle-xmark"></i> Clear</button>
                 </div>
             </form>
     </div>
@@ -236,7 +246,7 @@ if ($result === false) {
         if ($result && $result->num_rows > 0) {
             echo '<table id="dataTable">';
             echo '<thead>';
-            echo '<tr><th>#</th><th>User Info</th><th>ID Number</th><th>User Type</th><th>Year Level</th><th>Gender</th><th>Date</th><th>Time In</th><th>Time Out</th><th>Purpose</th><th colspan="2">Actions</th></tr>';
+            echo '<tr><th>#</th><th>User Info</th><th>ID Number</th><th>User Type</th><th>Year Level</th><th>Gender</th><th>Date</th><th>Time In</th><th>Time Out</th><th>Purpose</th><th colspan="2">Archive</th></tr>';
             echo '</thead>';
             echo '<tbody id="dataTableBody">';
 
@@ -257,7 +267,7 @@ if ($result === false) {
                 echo '<td>' . ($row['timeout'] ? $row['timeout'] : 'N/A') . '</td>';
                 echo '<td>' . $row['purpose'] . '</td>';
                 echo '<td hidden><button class="edit-btn" onclick="editBook(' . $row['id'] . ')"><i class="fas fa-edit"></i></button></td>';
-                echo '<td style="text-align: center;"><button class="delete-btn" onclick="deleteEntry(' . $row['id'] . ', ' . $aid . ')"><i class="fas fa-trash-alt"></i></button></td>';
+                echo '<td style="text-align: center;"><button class="delete-btn" onclick="deleteEntry(' . $row['id'] . ', ' . $aid . ')"><i class="fas fa-archive"></i></button></td>';
                 echo '</tr>';
             }
 
@@ -276,7 +286,20 @@ if ($result === false) {
         $mysqli->close();
         ?>
 </div>
-    <button class="print-button" onclick="printData()">Print Data</button> <!-- Button to print data -->
+<!-- Add this button beside 'Print Data' -->
+<form method="POST" action="../export_to_excel.php">
+    <input type="hidden" name="search" value="<?php echo $search; ?>">
+    <input type="hidden" name="idnum" value="<?php echo $idnum; ?>">
+    <input type="hidden" name="user_type" value="<?php echo $user_type; ?>">
+    <input type="hidden" name="course" value="<?php echo $course; ?>">
+    <input type="hidden" name="year_level" value="<?php echo $year_level; ?>">
+    <input type="hidden" name="gender" value="<?php echo $gender; ?>">
+    <input type="hidden" name="start_date" value="<?php echo $start_date; ?>">
+    <input type="hidden" name="end_date" value="<?php echo $end_date; ?>">
+    <input type="hidden" name="purpose" value="<?php echo $purpose; ?>">
+    <button class="print-button" type="submit"><i class="fas fa-file-excel"></i> Export to Excel</button>
+</form>
+    <button class="print-button" onclick="printData()"><i class='fas fa-print'></i> Print Data</button> <!-- Button to print data -->
     
     <script>
     // Function to clear the search form and redirect back to liblogs.php
@@ -289,34 +312,12 @@ if ($result === false) {
 </script>
 
     <script>
-        function printData() {
-        var startDate = document.getElementById("start-date").value;
-        var endDate = document.getElementById("end-date").value;
-        var heading = "<h2>Library users ";
-        if (startDate && endDate) {
-            // Convert dates to mm-dd-yyyy format
-            startDate = formatDate(startDate);
-            endDate = formatDate(endDate);
-            heading += "From " + startDate + " to " + endDate;
-        } else {
-            heading += "for All Dates";
-        }
-        heading += "</h2>";
-        var table = document.getElementById("dataTable").cloneNode(true); // Clone the table
-        var headerRow = table.querySelector("thead tr"); // Get the header row
-        headerRow.deleteCell(headerRow.cells.length - 1); // Remove the last cell from the header row
-
-        var rows = table.querySelectorAll("tbody tr"); // Get all data rows
-        rows.forEach(function(row) {
-            row.deleteCell(row.cells.length - 1); // Remove the last cell from each row
-        });
-
-        var printContents = heading + table.outerHTML; // Get the outer HTML of the modified table
-        var originalContents = document.body.innerHTML;
-        document.body.innerHTML = printContents;
-        window.print();
-        document.body.innerHTML = originalContents;
-    }
+function printData() {
+    const queryString = window.location.search; // Get the current query string
+    const adminName = "<?php echo isset($admin_username_display) ? $admin_username_display : 'Username'; ?>";
+    const printUrl = `../print_liblogs.php${queryString}&name=${encodeURIComponent(adminName)}`;
+    window.open(printUrl, '_blank'); // Open in a new tab
+}
 
     function formatDate(date) {
     var d = new Date(date);

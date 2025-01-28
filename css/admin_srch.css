@@ -150,7 +150,8 @@
 .search-bar input[type="text"],
 .search-bar input[type="number"],
 .search-bar select,
-.search-bar button[type="submit"] {
+.search-bar button[type="submit"],
+.search-bar button[type="button"] {
     padding: 10px;
     font-size: 16px;
     border: 1px solid black;
@@ -195,6 +196,7 @@ input[type="date"]:focus {
     color: black;
     cursor: pointer;
     border-radius: 15px;
+    border: none;
 }
 
 .search-bar button[type="submit"]:hover {
@@ -211,8 +213,7 @@ input[type="date"]:focus {
     color: black;
     cursor: pointer;
     border-radius: 15px;
-    padding: 10px;
-    border: solid black 1px;
+    border: none;
 }
 
 .search-bar button[type="button"]:hover {

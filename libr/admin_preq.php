@@ -39,7 +39,7 @@ if(isset($_GET['aid'])) {
 }
 
 // Fetch data with status = "Pending" from rsv table
-$query = "SELECT r.rid, r.uid, u.info, u.contact, r.title, r.status FROM rsv r JOIN users u ON r.uid = u.uid WHERE r.status = 'Pending'";
+$query = "SELECT r.rid, r.uid, u.info, u.contact, r.title, r.status, r.bid FROM rsv r JOIN users u ON r.uid = u.uid WHERE r.status = 'Pending'";
 $result = $mysqli->query($query);
 
 // Handle approve and reject actions
@@ -83,6 +83,142 @@ if(isset($_POST['action']) && isset($_POST['rid'])) {
     <!-- Include SweetAlert library -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 50%;
+            border-radius: 10px;
+            text-align: center;
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 28px;
+            color: #aaa;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            z-index: 1100;
+        }
+
+        .close-btn:hover,
+        .close-btn:focus {
+            color: black;
+            text-decoration: none;
+        }
+
+            /* Style for the approve and reject buttons */
+            .action-buttons {
+            display: inline-block;
+        }
+        /* Style for the approve and reject buttons */
+        .more-btn{
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            outline: none;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .more-btn {
+            background-color: gold; /* Green */
+            color: black;
+        }
+    </style>
+    <script>
+    function showPastLogs(uid) {
+        fetch(`get_pastlogs.php?uid=${uid}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const pastLogs = data.logs;
+                    let tableContent = `<table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Title</th>
+                                <th>Status</th>
+                                <th>Due Date</th>
+                                <th>Date Returned</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+                    pastLogs.forEach((log, index) => {
+                        tableContent += `<tr>
+                            <td>${index + 1}</td>
+                            <td>${log.title}</td>
+                            <td>${log.status}</td>
+                            <td>${log.due_date}</td>
+                            <td>${log.date_ret}</td>
+                        </tr>`;
+                    });
+                    tableContent += `</tbody></table>`;
+                    document.getElementById("modalContent").innerHTML = tableContent + '<button class="close-btn" onclick="closeModal()">×</button>';
+                    document.getElementById("pastLogsModal").style.display = 'block';
+                } else {
+                    Swal.fire('Error', 'No past logs found.', 'error');
+                }
+            });
+    }
+
+    function closeModal() {
+        document.getElementById("pastLogsModal").style.display = 'none';
+    }
+    </script>
+        <script>
+    function showBookDetails(bid) {
+        fetch(`get_bkdetails.php?bid=${bid}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const book = data.book;
+                    Swal.fire({
+                        title: book.title,
+                        html: `
+                            <p><strong>Title:</strong> ${book.title}</p>
+                            <p><strong>Author:</strong> ${book.author}</p>
+                            <p><strong>Genre:</strong> ${book.genre}</p>
+                            <p><strong>Status:</strong> ${book.status}</p>
+                            <p><strong>Published Year:</strong> ${book.year}</p>
+                            <p><strong>Dewey Decimal:</strong> ${book.dew_num}</p>
+                            <p><strong>ISBN:</strong> ${book.ISBN}</p>
+                            <p><strong>Shelf Number:</strong> ${book.shlf_num}</p>
+                            <p><strong>Condition:</strong> ${book.cndtn}</p>
+                            <p><strong>Additional Info:</strong> ${book.add_info}</p>
+                        `,
+                        icon: 'info',
+                        confirmButtonText: 'Close'
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'Unable to retrieve book details.',
+                        icon: 'error'
+                    });
+                }
+            });
+    }
+    </script>
     <script>
     // Function to calculate rsv_end based on current date
     function calculateRsvEnd(rid) {
@@ -146,7 +282,6 @@ if(isset($_POST['action']) && isset($_POST['rid'])) {
         <a href="admin_pf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Profile</a>
         <a href="admin_attd.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Library Logs</a>
         <a href="admin_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Statistics</a>
-        <a href="admin_wres.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Walk-in-Borrow</a>
         <a href="admin_preq.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item active">Pending Requests</a>
         <a href="admin_brel.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Borrowed Books</a>
         <a href="admin_ob.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Overdue Books</a>
@@ -174,6 +309,7 @@ if(isset($_POST['action']) && isset($_POST['rid'])) {
     <br>
     <div class="content-container">
         <div class="search-bar">
+        <h2>Pending Book Reservation Requests</h2>
         </div>
             
         <table>
@@ -184,6 +320,7 @@ if(isset($_POST['action']) && isset($_POST['rid'])) {
                     <th>Contact Number</th>
                     <th>Book Title</th>
                     <th>Status:</th>
+                    <th>Past Logs</th>
                     <th colspan='2'>Actions:</th>
                 </tr>
             </thead>
@@ -198,8 +335,9 @@ if(isset($_POST['action']) && isset($_POST['rid'])) {
                         echo "<td>" . $counter++ . "</td>";
                         echo "<td>" . $row["info"] . "</td>";
                         echo "<td>" . $row["contact"] . "</td>";
-                        echo "<td>" . $row["title"] . "</td>";
+                        echo "<td><a href='#' onclick='showBookDetails(" . $row['bid'] . ")'>" . $row['title'] . "</a></td>";
                         echo "<td>" . $row["status"] . "</td>";
+                        echo "<td style='text-align: center;'><button class='more-btn' onclick='showPastLogs(" . $row['uid'] . ")'><i class='fa fa-search-plus'></i></button></td>";
                         echo "<td>";
                         // Button to approve request
                         echo "<form style='text-align: center;' id='approveForm_" . $row['rid'] . "' method='post' action=''>";
@@ -219,11 +357,17 @@ if(isset($_POST['action']) && isset($_POST['rid'])) {
                         echo "</tr>";
                     }
                 } else {
-                    echo "<tr><td colspan='6'>No pending requests.</td></tr>";
+                    echo "<tr><td colspan='7'>No pending requests.</td></tr>";
                 }
                 ?>
             </tbody>
         </table>
+        <!-- Modal for past logs -->
+        <div id="pastLogsModal" class="modal">
+            <div class="modal-content" id="modalContent">
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+        </div>
     </div>
 
     <script>

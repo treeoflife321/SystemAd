@@ -150,11 +150,10 @@ if (isset($_POST['action']) && isset($_POST['checked_uids'])) {
         }
         ?>
 <a href="admin_dash.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Dashboard</a>
-<a href="admin_pf.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Profile</a>
+<a href="admin_pf.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Credentials</a>
 <a href="admin_users.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item active">Accounts</a>
 <a href="admin_attd.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Library Logs</a>
 <a href="admin_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Statistics</a>
-<a href="admin_wres.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Walk-in-Borrow</a>
 <a href="admin_preq.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Pending Requests</a>
 <a href="admin_brel.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Borrowed Books</a>
 <a href="admin_ob.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Overdue Books</a>
@@ -189,36 +188,51 @@ if (isset($_POST['action']) && isset($_POST['checked_uids'])) {
     
     <!-- Specific filters -->
     <input type="text" id="idNumberFilter" placeholder="Search by ID Number...">
-    <input type="text" id="yearLevelFilter" placeholder="Search by Year Level...">
+    <select id="courseFilter">
+    <option value="">Choose Course:</option>
+    <option value="BSESM">BSESM</option>
+    <option value="BSIT">BSIT</option>
+    <option value="BSMET">BSMET</option>
+    <option value="BSNAME">BSNAME</option>
+    <option value="BSTCM">BSTCM</option>
+    </select>
+    <select id="yearLevelFilter">
+        <option value="">Choose Year Level:</option>
+        <option value="1st Year">1st Year</option>
+        <option value="2nd Year">2nd Year</option>
+        <option value="3rd Year">3rd Year</option>
+        <option value="4th Year">4th Year</option>
+        <option value="5th Year">5th Year</option>
+    </select>
     <select id="genderFilter">
-        <option value="">All Genders</option>
+        <option value="">Choose Gender:</option>
         <option value="Male">Male</option>
         <option value="Female">Female</option>
         <option value="Non-Binary">Non-Binary</option>
     </select>
     <select id="userTypeFilter">
-        <option value="">All User Types</option>
+        <option value="">Choose User Type:</option>
         <option value="Student">Student</option>
         <option value="Faculty">Faculty</option>
         <option value="Staff">Staff</option>
     </select>
     <select id="statusFilter">
-        <option value="">All Statuses</option>
+        <option value="">Choose Status:</option>
         <option value="Active">Active</option>
         <option value="Pending">Pending</option>
         <option value="Disabled">Disabled</option>
     </select>
     
     <!-- Search and clear buttons -->
-    <button type="button" onclick="applyFilters()">Search</button>
-    <button type="button" onclick="clearFilters()">Clear</button>
+    <button type="button" onclick="applyFilters()"><i class='fas fa-search'></i> Search</button>
+    <button type="button" onclick="clearFilters()"><i class="fa-regular fa-circle-xmark"></i> Clear</button>
 </div>
 
     <a href="admin_adu.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="add-lib"><i class='fas fa-plus'></i> Add User</a>
 
     <div class="table-actions">
-        <button type="button" onclick="checkAll()">Check All</button>
-        <button type="button" onclick="uncheckAll()">Uncheck All</button>
+        <button type="button" onclick="checkAll()"><i class="fa-regular fa-square-check"></i> Check All</button>
+        <button type="button" onclick="uncheckAll()"><i class="fa-regular fa-rectangle-xmark"></i> Uncheck All</button>
     </div>
 
     <table style="margin-top: 20px;">
@@ -234,23 +248,60 @@ if (isset($_POST['action']) && isset($_POST['checked_uids'])) {
                 <th>Username</th>
                 <th>User Type</th>
                 <th>Status</th>
-                <th colspan="2">Actions:</th>
+                <th colspan="1">Actions:</th>
                 <th>Check</th>
             </tr>
         </thead>
         <tbody id="userTableBody">
-            <?php
-            // Query to fetch all user records
-            $query = "SELECT * FROM users";
-            $result = $mysqli->query($query);
+    <?php
+    // Check if a search or filter is applied
+    $hasFilters = isset($_GET['searchInput']) || isset($_GET['idNumberFilter']) || isset($_GET['courseFilter']) || isset($_GET['yearLevelFilter']) || isset($_GET['genderFilter']) || isset($_GET['userTypeFilter']) || isset($_GET['statusFilter']);
 
-            // Counter for the first column
-            $counter = 1;
+    if ($hasFilters) {
+        // Base query to fetch user records
+        $query = "SELECT * FROM users WHERE 1=1";
 
-            // Loop through each row
+        // Append conditions based on filters
+        if (!empty($_GET['searchInput'])) {
+            $searchInput = $mysqli->real_escape_string($_GET['searchInput']);
+            $query .= " AND (info LIKE '%$searchInput%' OR username LIKE '%$searchInput%')";
+        }
+        if (!empty($_GET['idNumberFilter'])) {
+            $idNumberFilter = $mysqli->real_escape_string($_GET['idNumberFilter']);
+            $query .= " AND idnum LIKE '%$idNumberFilter%'";
+        }
+        if (!empty($_GET['courseFilter'])) {
+            $courseFilter = $mysqli->real_escape_string($_GET['courseFilter']);
+            // Use case-insensitive matching to find the course in the 'info' column
+            $query .= " AND LOWER(info) LIKE LOWER('%$courseFilter%')";
+        }            
+        if (!empty($_GET['yearLevelFilter'])) {
+            $yearLevelFilter = $mysqli->real_escape_string($_GET['yearLevelFilter']);
+            $query .= " AND year_level = '$yearLevelFilter'";
+        }
+        if (!empty($_GET['genderFilter'])) {
+            $genderFilter = $mysqli->real_escape_string($_GET['genderFilter']);
+            $query .= " AND gender = '$genderFilter'";
+        }
+        if (!empty($_GET['userTypeFilter'])) {
+            $userTypeFilter = $mysqli->real_escape_string($_GET['userTypeFilter']);
+            $query .= " AND user_type = '$userTypeFilter'";
+        }
+        if (!empty($_GET['statusFilter'])) {
+            $statusFilter = $mysqli->real_escape_string($_GET['statusFilter']);
+            $query .= " AND status = '$statusFilter'";
+        }
+
+        // Execute the query
+        $result = $mysqli->query($query);
+
+        // Counter for the first column
+        $counter = 1;
+
+        // Check if results are found
+        if ($result && $result->num_rows > 0) {
             while ($row = $result->fetch_assoc()) {
                 echo "<tr>";
-                // Display the counter
                 echo "<td>" . $counter++ . "</td>";
                 echo "<td>" . $row['info'] . "</td>";
                 echo "<td>" . $row['idnum'] . "</td>";
@@ -261,21 +312,23 @@ if (isset($_POST['action']) && isset($_POST['checked_uids'])) {
                 echo "<td>" . $row['username'] . "</td>";
                 echo "<td>" . $row['user_type'] . "</td>";
                 echo "<td>" . $row['status'] . "</td>";
-                // Add edit and delete buttons
                 echo '<td style="text-align:center;">';
                 echo '<button class="edit-btn" onclick="editUser(' . $row['uid'] . ',' . $aid . ')"><i class="fas fa-edit"></i></button>';
                 echo '</td>';
-                echo '<td style="text-align:center;">';
-                echo '<button class="delete-btn" onclick="deleteUser(' . $row['uid'] . ')"><i class="fas fa-trash-alt"></i></button>';
-                echo '</td>';
-                // Add a checkbox
                 echo '<td style="text-align:center;">';
                 echo '<input type="checkbox" name="user_check[]" value="' . $row['uid'] . '">';
                 echo '</td>';
                 echo "</tr>";
             }
-            ?>
-        </tbody>
+        } else {
+            echo "<tr><td colspan='12' style='text-align:center;'>No users found.</td></tr>";
+        }
+    } else {
+        // If no filters or search input, display a default empty message
+        echo "<tr><td colspan='12' style='text-align:center;'>Please use the search bar to find users.</td></tr>";
+    }
+    ?>
+</tbody>
     </table>
 
     <div class="status-actions">
@@ -339,48 +392,64 @@ function uncheckAll() {
 }
 
 function applyFilters() {
-    var generalInput = document.getElementById("searchInput").value.toLowerCase();
-    var idNumber = document.getElementById("idNumberFilter").value.toLowerCase();
-    var yearLevel = document.getElementById("yearLevelFilter").value.toLowerCase();
-    var gender = document.getElementById("genderFilter").value;
-    var userType = document.getElementById("userTypeFilter").value;
-    var status = document.getElementById("statusFilter").value;
-    var tableBody = document.getElementById("userTableBody");
-    var rows = tableBody.getElementsByTagName("tr");
+    const searchInput = document.getElementById('searchInput').value;
+    const idNumberFilter = document.getElementById('idNumberFilter').value;
+    const yearLevelFilter = document.getElementById('yearLevelFilter').value;
+    const genderFilter = document.getElementById('genderFilter').value;
+    const userTypeFilter = document.getElementById('userTypeFilter').value;
+    const statusFilter = document.getElementById('statusFilter').value;
+    const courseFilter = document.getElementById('courseFilter').value;
 
-    for (var i = 0; i < rows.length; i++) {
-        var info = rows[i].getElementsByTagName("td")[1].textContent.toLowerCase();
-        var idNum = rows[i].getElementsByTagName("td")[2].textContent.toLowerCase();
-        var year = rows[i].getElementsByTagName("td")[3].textContent.toLowerCase();
-        var genderValue = rows[i].getElementsByTagName("td")[5].textContent;
-        var type = rows[i].getElementsByTagName("td")[8].textContent;
-        var rowStatus = rows[i].getElementsByTagName("td")[9].textContent;
+    const urlParams = new URLSearchParams(window.location.search);
+    if (searchInput) urlParams.set('searchInput', searchInput);
+    if (idNumberFilter) urlParams.set('idNumberFilter', idNumberFilter);
+    if (yearLevelFilter) urlParams.set('yearLevelFilter', yearLevelFilter);
+    if (genderFilter) urlParams.set('genderFilter', genderFilter);
+    if (userTypeFilter) urlParams.set('userTypeFilter', userTypeFilter);
+    if (statusFilter) urlParams.set('statusFilter', statusFilter);
+    if (courseFilter) urlParams.set('courseFilter', courseFilter);
 
-        // Apply all filters
-        if (
-            (info.includes(generalInput) || idNum.includes(generalInput)) &&
-            (idNumber === "" || idNum.includes(idNumber)) &&
-            (yearLevel === "" || year.includes(yearLevel)) &&
-            (gender === "" || genderValue === gender) &&
-            (userType === "" || type === userType) &&
-            (status === "" || rowStatus === status)
-        ) {
-            rows[i].style.display = "";
-        } else {
-            rows[i].style.display = "none";
-        }
-    }
+    window.location.search = urlParams.toString();
 }
 
 function clearFilters() {
-    document.getElementById("searchInput").value = "";
-    document.getElementById("idNumberFilter").value = "";
-    document.getElementById("yearLevelFilter").value = "";
-    document.getElementById("genderFilter").value = "";
-    document.getElementById("userTypeFilter").value = "";
-    document.getElementById("statusFilter").value = "";
-    applyFilters();
+    const urlParams = new URLSearchParams(window.location.search);
+    const preservedParams = {};
+
+    // Add essential parameters to be preserved
+    if (urlParams.has('aid')) {
+        preservedParams['aid'] = urlParams.get('aid');
+    }
+    if (urlParams.has('user')) {
+        preservedParams['user'] = urlParams.get('user');
+    }
+
+    // Create a new query string with preserved parameters
+    const newQueryString = new URLSearchParams(preservedParams).toString();
+
+    // Update the URL without unwanted parameters
+    window.location.search = newQueryString ? `?${newQueryString}` : '';
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+
+    const searchInput = urlParams.get('searchInput');
+    const idNumberFilter = urlParams.get('idNumberFilter');
+    const yearLevelFilter = urlParams.get('yearLevelFilter');
+    const genderFilter = urlParams.get('genderFilter');
+    const userTypeFilter = urlParams.get('userTypeFilter');
+    const statusFilter = urlParams.get('statusFilter');
+    const courseFilter = urlParams.get('courseFilter');
+
+    if (searchInput) document.getElementById('searchInput').value = searchInput;
+    if (idNumberFilter) document.getElementById('idNumberFilter').value = idNumberFilter;
+    if (yearLevelFilter) document.getElementById('yearLevelFilter').value = yearLevelFilter;
+    if (genderFilter) document.getElementById('genderFilter').value = genderFilter;
+    if (userTypeFilter) document.getElementById('userTypeFilter').value = userTypeFilter;
+    if (statusFilter) document.getElementById('statusFilter').value = statusFilter;
+    if (courseFilter) document.getElementById('courseFilter').value = courseFilter;
+});
 
 // Function to update status
 function updateStatus(action) {

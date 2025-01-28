@@ -172,6 +172,61 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['old_password'])) {
     <link rel="icon" type="image/x-icon" href="css/pics/logop.png">
     <link rel="stylesheet" href="css/admin_pf.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+.content-container {
+    position: relative; /* To position the X button relative to this container */
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    width: 400px;
+    margin-top: 100px;
+    margin-left: 550px;
+    background: #fff;
+}
+
+.button-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+}
+
+.cancel-btn {
+    position: absolute;
+    top: 10px; /* Adjust as needed for spacing */
+    right: 10px; /* Adjust as needed for spacing */
+    background-color: transparent;
+    border: none;
+    font-size: 20px;
+    color: red;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.cancel-btn:hover {
+    color: darkred;
+}
+
+.save-btn {
+    width: 100%;
+    background-color: green;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.save-btn:hover {
+    background-color: darkgreen;
+}
+
+form {
+    position: relative;
+    margin: 0;
+}
+    </style>
 </head>
 <body class="bg">
 <div class="sidebar">
@@ -187,11 +242,10 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['old_password'])) {
         }
         ?>
     <a href="admin_dash.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Dashboard</a>
-    <a href="admin_pf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item active">Profile</a>
+    <a href="admin_pf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item active">User Credentials</a>
     <a href="admin_srch.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Accounts</a>
     <a href="admin_attd.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Library Logs</a>
     <a href="admin_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Statistics</a>
-    <a href="admin_wres.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Walk-in-Borrow</a>
     <a href="admin_preq.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Pending Requests</a>
     <a href="admin_brel.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Borrowed Books</a>
     <a href="admin_ob.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Overdue Books</a>
@@ -216,8 +270,11 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['old_password'])) {
         <p>Time: <span id="current-time"></span></p>
     </div>
 
-<div class="content-container">
-    <center><h1>Admin Profile</h1></center>
+    <div class="content-container">
+    <!-- Cancel button as 'X' -->
+    <button type="button" class="cancel-btn" onclick="window.location.href='admin_dash.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>'">X</button>
+
+    <center><h1>Admin Credentials</h1></center>
     <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>?aid=<?php echo $aid; ?>" method="POST">
         <!-- Populate input fields with fetched data -->
         <label for="name"></label>
@@ -239,11 +296,8 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['old_password'])) {
         <label for="repeat_password"></label>
         <input type="password" id="repeat_password" name="repeat_password" placeholder="Repeat New Password"><br><br>
 
-        <div class="button-container">
-            <!-- Cancel button -->
-            <button style="width: 100px; background-color: green;" type="submit">Save</button>
-            <a href="admin_dash.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>"><button style="width: 100px; background-color: red;" type="button">Cancel</button></a>
-        </div>
+        <!-- Save button -->
+        <button type="submit" class="save-btn">Save</button>
     </form>
 </div>
 

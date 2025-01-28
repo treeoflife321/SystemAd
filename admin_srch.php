@@ -103,11 +103,10 @@ if(isset($_POST['delete_aid'])) {
         }
         ?>
     <a href="admin_dash.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Dashboard</a>
-    <a href="admin_pf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Profile</a>
+    <a href="admin_pf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Credentials</a>
     <a href="admin_srch.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item active">Accounts</a>
     <a href="admin_attd.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Library Logs</a>
     <a href="admin_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Statistics</a>
-    <a href="admin_wres.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Walk-in-Borrow</a>
     <a href="admin_preq.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Pending Requests</a>
     <a href="admin_brel.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Borrowed Books</a>
     <a href="admin_ob.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Overdue Books</a>
@@ -137,7 +136,7 @@ if(isset($_POST['delete_aid'])) {
     <div class="search-bar">
     <h1 style="color: black;">Search Accounts</h1>
         <input type="text" placeholder="Search...">
-        <button type="submit">Search</button>
+        <button type="submit"><i class='fas fa-search'></i> Search</button>
     </div>
     <a href="admin_sacc.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="add-lib"><i class='fas fa-plus'></i> Add Librarian</a>
 
@@ -149,7 +148,7 @@ if(isset($_POST['delete_aid'])) {
                 <th>Contact #</th>
                 <th>Username</th>
                 <th hidden>Password</th>
-                <th colspan="2">Actions:</th>
+                <th colspan="1">Actions:</th>
             </tr>
         </thead>
         <tbody>
@@ -175,7 +174,7 @@ if(isset($_POST['delete_aid'])) {
                 echo '<td style="text-align:center;">';
                 echo '<button class="edit-btn" onclick="editAdmin(' . $row['aid'] . ',' . $aid . ')"><i class="fas fa-edit"></i></button>';
                 echo '</td>';
-                echo '<td style="text-align:center;">';
+                echo '<td hidden style="text-align:center;">';
                 echo '<button class="delete-btn" onclick="deleteAdmin(' . $row['aid'] . ')"><i class="fas fa-trash-alt"></i></button>';
                 echo '</td>';
                 echo "</tr>";

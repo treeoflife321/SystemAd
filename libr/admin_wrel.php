@@ -198,7 +198,7 @@ if (isset($_POST['check_reservation'])) {
                         echo '<td>';
                         echo '<a href="edit_rsv.php?aid=' . $aid . '&rid=' . $row["rid"] . '"><button class="edit-btn"><i class="fas fa-edit"></i></button></a>';
                         echo '</td>';
-                        echo "<td style='text-align: center;'>
+                        echo "<td hidden style='text-align: center;'>
                                 <form id='delete_form_" . $row["rid"] . "' name='delete_form_" . $row["rid"] . "' method='post'>
                                 <input type='hidden' name='delete_reservation' value='true'>
                                     <input type='hidden' name='reservation_id' value='" . $row["rid"] . "'>

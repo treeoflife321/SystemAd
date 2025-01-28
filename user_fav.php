@@ -1,14 +1,8 @@
 <?php
-function checkAdminSession() {
-    if (!isset($_GET['uid']) || empty($_GET['uid'])) {
-        header("Location: login.php");
-        exit;
-    }
-}
-
-// Call the function at the top of your files
-checkAdminSession();
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 ?>
+
 <?php
 // Include database connection
 include 'config.php';
@@ -82,6 +76,42 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 } 
 
+
+// Query to count overdued books for the current user
+$query_overdued_books = "SELECT COUNT(*) AS overdued_count FROM rsv WHERE uid = ? AND status = 'Overdue'";
+$stmt_overdued_books = $mysqli->prepare($query_overdued_books);
+$stmt_overdued_books->bind_param("i", $uid);
+$stmt_overdued_books->execute();
+$result_overdued_books = $stmt_overdued_books->get_result();
+
+// Initialize overdued books count
+$overdued_count = 0;
+
+// Check if the result is not empty
+if ($result_overdued_books && $result_overdued_books->num_rows > 0) {
+    $row_overdued_books = $result_overdued_books->fetch_assoc();
+    $overdued_count = $row_overdued_books['overdued_count'];
+}
+
+// Query to count available favorite items for the current user
+$query_available_favorites = "SELECT COUNT(*) AS available_favorites_count 
+                               FROM fav 
+                               INNER JOIN inventory ON fav.bid = inventory.bid 
+                               WHERE fav.uid = ? AND inventory.status = 'Available'";
+$stmt_available_favorites = $mysqli->prepare($query_available_favorites);
+$stmt_available_favorites->bind_param("i", $uid);
+$stmt_available_favorites->execute();
+$result_available_favorites = $stmt_available_favorites->get_result();
+
+// Initialize available favorites count
+$available_favorites_count = 0;
+
+// Check if the result is not empty
+if ($result_available_favorites && $result_available_favorites->num_rows > 0) {
+    $row_available_favorites = $result_available_favorites->fetch_assoc();
+    $available_favorites_count = $row_available_favorites['available_favorites_count'];
+}
+
 $mysqli->close();
 ?>
 
@@ -113,8 +143,22 @@ $mysqli->close();
         <div class="hell">Hello, <?php echo $user_username_display; ?>!</div>
             <a href="user_dash.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>" class="sidebar-item">Dashboard</a>
             <a href="user_rsrv.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>" class="sidebar-item">Reserve/Borrow</a>
-            <a href="user_ovrd.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>" class="sidebar-item">Overdue</a>
-            <a href="user_fav.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>" class="sidebar-item active">Favorites</a>
+            <a href="user_ovrd.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>" class="sidebar-item" style="position: relative;">
+    Overdue
+    <?php if ($overdued_count > 0): ?>
+        <span style="position: absolute; top: 10%; right: 5%; background-color: red; color: white; border-radius: 50%; padding: 0.2em 0.6em; font-size: 0.8em;">
+            <?php echo $overdued_count; ?>
+        </span>
+    <?php endif; ?>
+</a>
+<a href="user_fav.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>" class="sidebar-item active" style="position: relative;">
+    Favorites
+    <?php if ($available_favorites_count > 0): ?>
+        <span style="position: absolute; top: 10%; right: 5%; background-color: red; color: white; border-radius: 50%; padding: 0.2em 0.6em; font-size: 0.8em;">
+            <?php echo $available_favorites_count; ?>
+        </span>
+    <?php endif; ?>
+</a>
             <a href="user_sebk.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>" class="sidebar-item">E-Books</a>
             <a href="login.php" class="logout-btn">Logout</a>
         </div>
@@ -167,7 +211,7 @@ if ($result && $result->num_rows > 0) {
         echo "<td>" . $counter++ . "</td>";
         echo "<td>" . $row['title'] . "</td>";
         echo "<td>" . $row['status'] . "</td>";
-        echo "<td style='text-align:center;'><button type='button' class='reserve-btn' data-bid='" . $row['bid'] . "' data-title='" . $row['title'] . "' data-uid='" . $uid . "'>Reserve</button></td>"; // Add data-uid attribute
+        echo "<td style='text-align:center;'><button type='button' class='reserve-btn' data-bid='" . $row['bid'] . "' data-title='" . $row['title'] . "' data-uid='" . $uid . "'>Reserve</button></td>";
         echo "<td style='text-align:center;'><button type='button' class='remove-favorite-btn' data-fid='" . $row['fid'] . "'><i class='fas fa-times-circle fa-lg'></i></button></td>";
         echo "</tr>";
     }
@@ -210,7 +254,10 @@ $mysqli->close();
                                 alertMessage = 'This book is already reserved.';
                                 break;
                             case 'Overdued':
-                                alertMessage = 'This book is currently overdued by another user.';
+                                alertMessage = 'This book is currently overdued.';
+                                break;
+                            case 'Borrowed':
+                                alertMessage = 'This book is currently borrowed.';
                                 break;
                             default:
                                 alertMessage = 'Unknown status. Cannot reserve the book.';
@@ -228,43 +275,66 @@ $mysqli->close();
         });
 
         function reserveBook(bid, title, uid) {
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', 'user_fav.php', true);
-            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState === XMLHttpRequest.DONE) {
-                    if (xhr.status === 200 && xhr.responseText === "success") {
+    if (!bid || !title || !uid) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Invalid data for reservation.',
+        });
+        return;
+    }
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', 'user_fav.php', true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === XMLHttpRequest.DONE) {
+            if (xhr.status === 200) {
+                const response = xhr.responseText.trim();
+                console.log("Server Response:", response); // Debug log
+                switch (response) {
+                    case "success":
                         Swal.fire({
                             icon: 'success',
                             title: 'Reservation Successful',
                             showConfirmButton: false,
                             timer: 1500
-                        }).then(function() {
-                            window.location.reload();
-                        });
-                    } else if (xhr.status === 200 && xhr.responseText === "not_available") {
+                        }).then(() => window.location.reload());
+                        break;
+                    case "not_available":
                         Swal.fire({
                             icon: 'success',
-                            title: 'Reservation is now pending',
+                            title: 'Reservation Successful',
                             showConfirmButton: false,
                             timer: 1500
-                        }).then(function() {
-                            window.location.reload();
-                        });
-                    } else {
+                        }).then(() => window.location.reload());
+                        break;
+                    case "missing_parameters":
                         Swal.fire({
                             icon: 'success',
-                            title: 'Reservation is now pending',
+                            title: 'Reservation Successful',
                             showConfirmButton: false,
                             timer: 1500
-                        }).then(function() {
-                            window.location.reload();
-                        });
-                    }
+                        }).then(() => window.location.reload());
+                        break;
+                    default:
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Reservation Successful',
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => window.location.reload());
                 }
-            };
-            xhr.send('bid=' + bid + '&title=' + title + '&uid=' + uid); // Pass uid in the data
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Server Error',
+                    text: 'Failed to connect to the server.',
+                });
+            }
         }
+    };
+    xhr.send(`bid=${bid}&title=${title}&uid=${uid}`); // Pass uid in the data
+}
     </script>
 
 <script>

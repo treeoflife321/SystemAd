@@ -237,6 +237,29 @@ if ($result_librarian_count) {
     $result_librarian_count->free();
 }
 
+// Get the current date
+$currentDate = date("Y-m-d"); // Format the date to match the format in the timestamp column
+
+// Prepare and execute SQL query to count noise
+$query_noise = "SELECT COUNT(*) AS noise_count FROM t_endpoint WHERE DATE(timestamp) = ?"; 
+$stmt_noise = $mysqli->prepare($query_noise);
+$stmt_noise->bind_param("s", $currentDate);
+$stmt_noise->execute();
+$result_noise = $stmt_noise->get_result();
+
+// Initialize noise count
+$noise_count = 0;
+
+// Check if there are results
+if ($result_noise && $result_noise->num_rows > 0) {
+    $noise_data = $result_noise->fetch_assoc();
+    $noise_count = $noise_data['noise_count'];
+}
+
+// Free the result set
+if ($result_noise) {
+    $result_noise->free();
+}
 ?>
 
 <!DOCTYPE html>
@@ -265,11 +288,10 @@ if ($result_librarian_count) {
         }
         ?>
         <a href="admin_dash.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item active">Dashboard</a>
-        <a href="admin_pf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Profile</a>
+        <a href="admin_pf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Credentials</a>
         <a href="admin_srch.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Accounts</a>
         <a href="admin_attd.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Library Logs</a>
         <a href="admin_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Statistics</a>
-        <a href="admin_wres.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Walk-in-Borrow</a>
         <a href="admin_preq.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Pending Requests</a>
         <a href="admin_brel.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Borrowed Books</a>
         <a href="admin_ob.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Overdue Books</a>
@@ -429,16 +451,16 @@ if ($result_librarian_count) {
         </div></a>
     </div>
 
-    <!-- <div class="box pdf"> <a style="text-decoration:none;" href="admin_noise.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>">
+    <div class="box noise"> <a style="text-decoration:none;" href="admin_noise.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>">
         <div class="box-content margin-right:11%;">
         <div class="box-icon">
-            <img src="css/pics/pdf.png" style="width:70px; height:65px;" alt="Total PDFs">
+            <img src="css/pics/noise.png" style="width:70px; height:65px;" alt="Total PDFs">
         </div>
         <div class="box-text">
-                <div><span style="font-weight:bold; font-size: 30px;"><?php echo $totalPdfsCount; ?></span> <br>Noise Levels</div>
+                <div><span style="font-weight:bold; font-size: 30px;"><?php echo $noise_count; ?></span> <br>Noise Levels</div>
         </div>
         </div></a>
-    </div> -->
+    </div>
 
         </div>
     </div>
@@ -592,5 +614,44 @@ function toggleDropdown(event) {
         }
     }
     </script>
+
+<script>
+        let lastTimestamp = null;
+
+// Function to check for new data
+function checkForNewData() {
+    fetch('check_new_data.php')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'data_found') {
+                const { noise_level, timestamp } = data;
+
+                if (lastTimestamp !== timestamp) {
+                    lastTimestamp = timestamp;
+
+                    Swal.fire({
+                        title: 'Noise Detected!',
+                        text: `Noise Level = ${noise_level}`,
+                        icon: 'warning',
+                        confirmButtonText: 'OK'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Get the current 'aid' parameter from the URL
+                            const urlParams = new URLSearchParams(window.location.search);
+                            const aid = urlParams.get('aid');
+
+                            // Redirect to admin_noise.php with the aid parameter
+                            window.location.href = `admin_noise.php?aid=${aid}`;
+                        }
+                    });
+                }
+            }
+        })
+        .catch(error => console.error('Error checking for new data:', error));
+}
+
+// Start checking for new data every 5 seconds
+setInterval(checkForNewData, 5000);
+</script>
 </body>
 </html>

@@ -81,8 +81,63 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add E-Book</title>
     <link rel="icon" type="image/x-icon" href="css/pics/logop.png">
-    <link rel="stylesheet" href="css/admin_pf.css">
+    <link rel="stylesheet" href="../css/admin_pf.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+.content-container {
+    position: relative; /* To position the X button relative to this container */
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    width: 400px;
+    margin-top: 100px;
+    margin-left: 550px;
+    background: #fff;
+}
+
+.button-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+}
+
+.cancel-btn {
+    position: absolute;
+    top: 10px; /* Adjust as needed for spacing */
+    right: 10px; /* Adjust as needed for spacing */
+    background-color: transparent;
+    border: none;
+    font-size: 20px;
+    color: red;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.cancel-btn:hover {
+    color: darkred;
+}
+
+.save-btn {
+    width: 100%;
+    background-color: green;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.save-btn:hover {
+    background-color: darkgreen;
+}
+
+form {
+    position: relative;
+    margin: 0;
+}
+    </style>
 </head>
 <body class="bg">
 <div class="sidebar">
@@ -101,7 +156,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <a href="admin_pf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Profile</a>
     <a href="admin_attd.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Library Logs</a>
     <a href="admin_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Statistics</a>
-    <a href="admin_wres.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Walk-in-Borrow</a>
     <a href="admin_preq.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Pending Requests</a>
     <a href="admin_brel.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Borrowed Books</a>
     <a href="admin_ob.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Overdue Books</a>
@@ -127,7 +181,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </div>
 
 <div class="content-container">
-    <div class="form-container">
+    
+<a href="admin_pdf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>"><button class="cancel-btn" type="button">X</button></a>
+
         <center><h1>E-Book Registration</h1></center>
         <?php if (!empty($alertMessage)) : ?>
             <script>
@@ -162,12 +218,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <input type="text" id="link" name="link" placeholder="Link of the E-Book" required><br><br>
 
             <div class="button-container">
-                <!-- Cancel button -->
-                <button style="width: 100px; background-color:green;" type="submit">Register</button>
-                <a href="admin_pdf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>"><button style="width: 100px; background-color:red;" type="button">Cancel</button></a>
+                <!-- Register button -->
+                <button class="save-btn" type="submit">Register</button>
             </div>
         </form>
-    </div>
 </div>
 <script>
     // Dropdown script

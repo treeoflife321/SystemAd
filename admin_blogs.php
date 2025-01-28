@@ -5,25 +5,34 @@ include 'config.php';
 // Check if 'aid' parameter is present in the URL
 if(isset($_GET['aid'])) {
     $aid = $_GET['aid'];
-    // Query to fetch the username corresponding to the aid
-    $query = "SELECT username FROM admin WHERE aid = ?";
-    $stmt = $mysqli->prepare($query);
-    $stmt->bind_param("i", $aid);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    // Check if the result is not empty
-    if ($result && $result->num_rows > 0) {
-        $admin = $result->fetch_assoc();
-        $admin_username = $admin['username'];
-        // Display the admin username in the sidebar
-        $admin_username_display = $admin_username;
-    } else {
-        // Display a default message if admin username is not found
-        $admin_username_display = "Username";
-    }
-    // Close statement
-    $stmt->close();
+// Fetch the 'name' column along with 'username'
+$query = "SELECT username, name FROM admin WHERE aid = ?";
+$stmt = $mysqli->prepare($query);
+if ($stmt === false) {
+    die("Error in preparing statement: " . $mysqli->error);
+}
+
+// Bind parameters and execute
+$stmt->bind_param("i", $aid);
+if (!$stmt->execute()) {
+    die("Error in executing statement: " . $stmt->error);
+}
+
+// Get result
+$result = $stmt->get_result();
+
+// Check if the result is not empty
+if ($result && $result->num_rows > 0) {
+    $admin = $result->fetch_assoc();
+    $admin_username_display = $admin['username'];
+    $admin_name_display = $admin['name']; // Fetch the 'name' column
+} else {
+    $admin_username_display = "Username";
+    $admin_name_display = "Name";
+}
+
+// Close statement
+$stmt->close();
 }
 
 // Initialize the WHERE clause for the SQL query
@@ -69,7 +78,7 @@ if (isset($_GET['search_info']) || isset($_GET['search_title']) || isset($_GET['
 }
 
 // Finalize the SQL query
-$query = "SELECT r.rid, u.info, u.contact, r.status, r.title, r.date_rel, r.date_ret, r.rsv_end 
+$query = "SELECT r.rid, u.info, u.contact, r.status, r.title, r.date_rel, r.date_ret, r.rsv_end, r.remarks 
           FROM users u 
           JOIN rsv r ON u.uid = r.uid 
           $where_clause";
@@ -119,11 +128,10 @@ if (isset($_POST['delete_reservation'])) {
         }
         ?>
         <a href="admin_dash.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Dashboard</a>
-        <a href="admin_pf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Profile</a>
+        <a href="admin_pf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Credentials</a>
         <a href="admin_srch.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Accounts</a>
         <a href="admin_attd.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Library Logs</a>
         <a href="admin_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Statistics</a>
-        <a href="admin_wres.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Walk-in-Borrow</a>
         <a href="admin_preq.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Pending Requests</a>
         <a href="admin_brel.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item active">Borrowed Books</a>
         <a href="admin_ob.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item ">Overdue Books</a>
@@ -152,7 +160,7 @@ if (isset($_POST['delete_reservation'])) {
 
     <div class="content-container">
     <div class="search-bar">
-    <div class="search-bar">
+    <h2>Borrowed Books Log</h2>
     <form method="GET" action="admin_blogs.php">
         <input type="text" name="search_info" placeholder="Search by Student Info">
         <input type="text" name="search_title" placeholder="Search by Book Title">
@@ -181,7 +189,8 @@ if (isset($_POST['delete_reservation'])) {
                     <th>Reservation Due</th>
                     <th>Date Released</th>
                     <th>Date Returned</th>
-                    <th>Action:</th>
+                    <th>Remarks</th>
+                    <th hidden>Action:</th>
                 </tr>
             </thead>
             <tbody>
@@ -200,8 +209,9 @@ if (isset($_POST['delete_reservation'])) {
                         echo "<td>" . $row["rsv_end"] . "</td>";
                         echo "<td>" . $row["date_rel"] . "</td>";
                         echo "<td>" . $row["date_ret"] . "</td>";
+                        echo "<td>" . $row["remarks"] . "</td>";
                         // Add delete buttons
-                        echo "<td style='text-align: center;'>
+                        echo "<td hidden style='text-align: center;'>
                             <form id='delete_form_" . $row["rid"] . "' name='delete_form_" . $row["rid"] . "' method='post'>
                             <input type='hidden' name='delete_reservation' value='true'>
                                 <input type='hidden' name='reservation_id' value='" . $row["rid"] . "'>
@@ -217,64 +227,9 @@ if (isset($_POST['delete_reservation'])) {
             </tbody>
         </table>
         <br>
-        <button onclick="printData()" class="print-button">Print Data</button>
-    </div>
+        <a href="print_bltable.php?<?php echo $_SERVER['QUERY_STRING'] . '&name=' . urlencode($admin_name_display); ?>" class="print-button" target="_blank"><i class='fas fa-print'></i> Print Logs</a>
+        </div>
 
-    <script>
-    // Function to print the table
-    function printData() {
-        var tableContent = `
-            <table>
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>User Info</th>
-                        <th>Contact Number</th>
-                        <th>Book Title</th>
-                        <th>Status</th>
-                        <th>Reservation Due</th>
-                        <th>Date Released</th>
-                        <th>Date Returned</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-
-        // Loop through each row in the table
-        var rows = document.querySelectorAll('.content-container table tbody tr');
-        rows.forEach(function(row, index) {
-            var rowData = row.querySelectorAll('td');
-            tableContent += `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td>${rowData[2].textContent}</td>
-                    <td>${rowData[3].textContent}</td>
-                    <td>${rowData[4].textContent}</td>
-                    <td>${rowData[5].textContent}</td>
-                    <td>${rowData[6].textContent}</td>
-                    <td>${rowData[7].textContent}</td>
-                    <td>${rowData[8].textContent}</td>
-                </tr>
-            `;
-        });
-
-        tableContent += `
-                </tbody>
-            </table>
-        `;
-
-        // Open a new window and write the table content
-        var printWindow = window.open('', '', 'height=600,width=800');
-        printWindow.document.write('<html><head><title>Borrowed Books Logs</title>');
-        printWindow.document.write('<style>@media print { table, th, td { border: 1px solid black; border-collapse: collapse; } th, td { padding: 8px; text-align: left; } }</style>'); // Print styling
-        printWindow.document.write('</head><body>');
-        printWindow.document.write('<h1>Borrowed Books Logs</h1>'); // Add header
-        printWindow.document.write(tableContent);
-        printWindow.document.write('</body></html>');
-        printWindow.document.close();
-        printWindow.print();
-    }
-</script>
 <script>
 // Function to handle reservation deletion
 function deleteReservation(rid) {

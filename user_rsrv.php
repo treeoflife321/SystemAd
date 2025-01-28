@@ -100,6 +100,46 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $mysqli->close();
 }
 ?>
+<?php
+// Query to count overdued books for the current user
+$query_overdued_books = "SELECT COUNT(*) AS overdued_count FROM rsv WHERE uid = ? AND status = 'Overdue'";
+$stmt_overdued_books = $mysqli->prepare($query_overdued_books);
+$stmt_overdued_books->bind_param("i", $uid);
+$stmt_overdued_books->execute();
+$result_overdued_books = $stmt_overdued_books->get_result();
+
+// Initialize overdued books count
+$overdued_count = 0;
+
+// Check if the result is not empty
+if ($result_overdued_books && $result_overdued_books->num_rows > 0) {
+    $row_overdued_books = $result_overdued_books->fetch_assoc();
+    $overdued_count = $row_overdued_books['overdued_count'];
+}
+?>
+<?php
+// Query to count available favorite items for the current user
+$query_available_favorites = "SELECT COUNT(*) AS available_favorites_count 
+                               FROM fav 
+                               INNER JOIN inventory ON fav.bid = inventory.bid 
+                               WHERE fav.uid = ? AND inventory.status = 'Available'";
+$stmt_available_favorites = $mysqli->prepare($query_available_favorites);
+$stmt_available_favorites->bind_param("i", $uid);
+$stmt_available_favorites->execute();
+$result_available_favorites = $stmt_available_favorites->get_result();
+
+// Initialize available favorites count
+$available_favorites_count = 0;
+
+// Check if the result is not empty
+if ($result_available_favorites && $result_available_favorites->num_rows > 0) {
+    $row_available_favorites = $result_available_favorites->fetch_assoc();
+    $available_favorites_count = $row_available_favorites['available_favorites_count'];
+}
+
+// Close the statement
+$stmt_available_favorites->close();
+?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -111,6 +151,70 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link rel="stylesheet" href="css/user_rsrv.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+<style>
+    /* Cart container styles */
+.cart-header {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #444;
+}
+
+.cart-content {
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 15px;
+    max-width: 400px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Cart items list */
+#cart_items_list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0 0 15px 0;
+}
+
+#cart_items_list li {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 5px;
+    font-size: 1rem;
+    color: #333;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Submit and Cancel buttons */
+.cart-content button {
+    display: inline-block;
+    font-size: 1rem;
+    padding: 10px 15px;
+    margin-right: 10px;
+    color: #fff;
+    background-color: #007bff;
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.cart-content button#cancelButton {
+    background-color: #dc3545;
+}
+
+.cart-content button:hover {
+    background-color: #0056b3;
+}
+
+.cart-content button#cancelButton:hover {
+    background-color: #c82333;
+}
+</style>
 </head>
 <body class="bg">
     <div class="navbar" style = "position: fixed; top: 0;">
@@ -128,8 +232,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <div class="hell">Hello, <?php echo $user_username_display; ?>!</div>
         <a href="user_dash.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>" class="sidebar-item">Dashboard</a>
         <a href="user_rsrv.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>" class="sidebar-item active">Reserve/Borrow</a>
-        <a href="user_ovrd.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>" class="sidebar-item">Overdue</a>
-        <a href="user_fav.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>" class="sidebar-item">Favorites</a>
+        <a href="user_ovrd.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>" class="sidebar-item" style="position: relative;">
+    Overdue
+    <?php if ($overdued_count > 0): ?>
+        <span style="position: absolute; top: 10%; right: 5%; background-color: red; color: white; border-radius: 50%; padding: 0.2em 0.6em; font-size: 0.8em;">
+            <?php echo $overdued_count; ?>
+        </span>
+    <?php endif; ?>
+</a>
+<a href="user_fav.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>" class="sidebar-item" style="position: relative;">
+    Favorites
+    <?php if ($available_favorites_count > 0): ?>
+        <span style="position: absolute; top: 10%; right: 5%; background-color: red; color: white; border-radius: 50%; padding: 0.2em 0.6em; font-size: 0.8em;">
+            <?php echo $available_favorites_count; ?>
+        </span>
+    <?php endif; ?>
+</a>
         <a href="user_sebk.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>" class="sidebar-item">E-Books</a>
         <a href="login.php" class="logout-btn">Logout</a>
     </div>
@@ -151,6 +269,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <div class="search-bar">
         <input type="text" id="titleInput" placeholder="Search by Title...">
         <input type="text" id="authorInput" placeholder="Search by Author...">
+        <select id="genreSelect">
+        <option value="">Select Genre</option>
+        <?php
+        // Fetch genres from the inventory table
+        $query = "SELECT DISTINCT genre FROM inventory";
+        $result = $mysqli->query($query);
+        if ($result && $result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                echo "<option value='" . $row['genre'] . "'>" . $row['genre'] . "</option>";
+            }
+        }
+        ?>
+    </select>
         <button type="button" id="searchButton"><i class="fas fa-search"></i> Search</button>
         <button type="button" id="cancelSearchButton" style="background-color:crimson; color:white;">Cancel</button>
     </div>
@@ -164,6 +295,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <th hidden>Bid</th>
             <th>Title</th>
             <th>Author</th>
+            <th>Genre</th>
             <th>Status</th>
             <th>Reserve</th>
             <th>Favorite</th>
@@ -173,7 +305,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <tbody>
     <?php
 // Fetch data from inventory table
-$query = "SELECT i.bid, i.title, i.author, i.status, f.uid 
+$query = "SELECT i.bid, i.title, i.author, i.status, i.genre, f.uid 
           FROM inventory i 
           LEFT JOIN fav f ON i.bid = f.bid AND f.uid = ?";
 $stmt = $mysqli->prepare($query);
@@ -189,6 +321,7 @@ if ($result && $result->num_rows > 0) {
         echo "<td style='display: none;'>" . $row['bid'] . "</td>";
         echo "<td>" . $row['title'] . "</td>";
         echo "<td>" . $row['author'] . "</td>";
+        echo "<td>" . $row['genre'] . "</td>";
         echo "<td style='text-align:center;'>" . $row['status'] . "</td>";
         echo "<td style='text-align:center;'><button type='button' class='reserve-btn' data-bid='" . $row['bid'] . "' data-title='" . $row['title'] . "'>Reserve</button></td>";
         echo "<td style='text-align:center;'>";
@@ -209,12 +342,12 @@ $mysqli->close();
 ?>
     </tbody>
 </table>
-            <div class="cart-header">Cart: </div>
-            <div class="cart-content">
-                <textarea name="cart_items" id="cart_items" placeholder="Add items to your cart..." readonly></textarea>
-                <button type="submit" name="reserve_submit">Submit</button>
-                <button type="button" id="cancelButton">Cancel</button>
-            </div>
+    <div class="cart-header">Cart:</div>
+    <div class="cart-content">
+        <ul id="cart_items_list"></ul>
+        <button type="submit" name="reserve_submit">Submit</button>
+        <button type="button" id="cancelButton">Cancel</button>
+    </div>
         </form>
     </div>
 
@@ -222,57 +355,99 @@ $mysqli->close();
     <!-- Include SweetAlert library -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        const cartItemsList = document.getElementById('cart_items_list');
+
     // Function to handle the click event of the Reserve button
-    document.addEventListener('DOMContentLoaded', function() {
-    // Function to handle the click event of the Reserve button
+    document.addEventListener('DOMContentLoaded', function () {
     const reserveButtons = document.querySelectorAll('.reserve-btn');
+    const uid = new URLSearchParams(window.location.search).get('uid'); // Extract UID from URL
+
     reserveButtons.forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', async function () {
             const bid = this.getAttribute('data-bid');
             const title = this.getAttribute('data-title');
-            const status = this.parentNode.previousElementSibling.textContent.trim(); // Get the status from the previous cell
+            const status = this.parentNode.previousElementSibling.textContent.trim();
 
-            // Check if the status is "Not Reservable"
-            if (status === 'Not Reservable') {
-                // Show alert
+            // Check status
+            if (status === 'Not Reservable' || status === 'Reserved' || status === 'Overdue') {
                 Swal.fire({
                     icon: 'error',
                     title: 'Oops...',
-                    text: 'This book is not available for reservation.',
+                    text: `This book is ${status.toLowerCase()}.`,
                 });
-            } else if (status === 'Reserved') {
-                // Show alert
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: 'This book is already reserved.',
-                });
-            } else if (status === 'Overdue') {
-                // Show alert
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: 'This book is currently overdued by another user.',
-                });
-            } else {
-                const cartItemsTextarea = document.getElementById('cart_items');
-                const currentCartItems = cartItemsTextarea.value;
+                return;
+            }
+
+            try {
+                // Fetch the current transactions count for the user
+                const response = await fetch(`getUserTransactions.php?uid=${uid}`);
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Unable to fetch user transaction data. Please try again later.',
+                    });
+                    return;
+                }
+
+                const activeTransactions = result.activeCount;
+                const remainingLimit = 5 - activeTransactions;
+
+                if (remainingLimit <= 0) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Maximum Limit Reached',
+                        text: 'You have reached the maximum limit of active transactions.',
+                    });
+                    return;
+                }
 
                 // Check if the book is already in the cart
-                if (currentCartItems.includes(bid)) {
-                    // Show alert
+                const cartItems = Array.from(cartItemsList.children);
+                const isAlreadyInCart = cartItems.some(item => item.dataset.bid === bid);
+
+                if (isAlreadyInCart) {
                     Swal.fire({
                         icon: 'info',
                         title: 'Attention',
                         text: 'This book is already in the cart.',
                     });
-                } else {
-                    // Append the selected book's bid and title to the cart textarea
-                    cartItemsTextarea.value = currentCartItems ? currentCartItems + ',' + bid + ',' + title : bid + ',' + title;
+                    return;
                 }
+
+                // Check if adding this book exceeds the remaining limit
+                if (cartItems.length >= remainingLimit) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Maximum Limit Reached',
+                        text: `You can only reserve ${remainingLimit} books.`,
+                    });
+                    return;
+                }
+
+                // Add the book to the cart list
+                const listItem = document.createElement('li');
+                listItem.textContent = `${title}`;
+                listItem.dataset.bid = bid;
+                cartItemsList.appendChild(listItem);
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Added to Cart',
+                    text: 'Book successfully added to your cart.',
+                });
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred while processing your request. Please try again later.',
+                });
             }
         });
     });
+});
 
     // Function to handle the click event of the Submit button
     const reserveForm = document.getElementById('reserveForm');
@@ -282,10 +457,8 @@ $mysqli->close();
         event.preventDefault();
 
         // Check if the cart is empty
-        const cartItemsTextarea = document.getElementById('cart_items');
-        const cartItems = cartItemsTextarea.value.trim();
-        if (cartItems === '') {
-            // Show alert if cart is empty
+        const cartItems = Array.from(cartItemsList.children);
+        if (cartItems.length === 0) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Oops...',
@@ -298,19 +471,23 @@ $mysqli->close();
                 title: 'Reservation Pending',
                 text: 'Your reservation is now pending. After librarian confirmation, book is reserved for 3 days for you to claim.',
                 showConfirmButton: false, // Remove the confirm button
-                timer: 1500, // Timer for 1.5 seconds
+                timer: 2000, // Timer for 2 seconds
             }).then(() => {
-                // Submit the form after showing the alert
+                // Populate a hidden input with cart items and submit the form
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'cart_items';
+                hiddenInput.value = cartItems.map(item => item.dataset.bid).join(',');
+                reserveForm.appendChild(hiddenInput);
                 reserveForm.submit();
             });
         }
     });
 
-    // Function to clear the cart textarea when the cancel button is clicked
+    // Handle the Cancel button
     const cancelButton = document.getElementById('cancelButton');
-    cancelButton.addEventListener('click', function() {
-        const cartItemsTextarea = document.getElementById('cart_items');
-        cartItemsTextarea.value = '';
+    cancelButton.addEventListener('click', function () {
+        cartItemsList.innerHTML = ''; // Clear the cart list
     });
 
     // Function to handle the click event of the Favorite button
@@ -351,7 +528,6 @@ $mysqli->close();
             };
             xhr.send('uid=' + uid + '&bid=' + bid);
         });
-    });
 
     // Function to add to favorites
     function addToFavorites(uid, bid, icon) {
@@ -391,18 +567,23 @@ $mysqli->close();
 });
     </script>
 <script>
-// Update the handleSearch function to include author search
+// Update the handleSearch function to include title, author, and genre search
 function handleSearch() {
     const titleInput = document.getElementById('titleInput').value.toLowerCase();
     const authorInput = document.getElementById('authorInput').value.toLowerCase(); // Get author search input
+    const genreSelect = document.getElementById('genreSelect').value.toLowerCase(); // Get selected genre
     const bookRows = document.querySelectorAll('table tbody tr');
 
     // Loop through each book row
     bookRows.forEach(row => {
         const titleText = row.querySelector('td:nth-child(3)').innerText.toLowerCase();
         const authorText = row.querySelector('td:nth-child(4)').innerText.toLowerCase(); // Get author text
-        // Check if either title or author matches the search input
-        if (titleText.includes(titleInput) && authorText.includes(authorInput)) {
+        const genreText = row.querySelector('td:nth-child(5)').innerText.toLowerCase(); // Get genre text
+
+        // Check if title, author, and genre match the search input
+        if ((titleText.includes(titleInput) || titleInput === '') &&
+            (authorText.includes(authorInput) || authorInput === '') &&
+            (genreText.includes(genreSelect) || genreSelect === '')) {
             row.style.display = 'table-row'; // Display the row
         } else {
             row.style.display = 'none'; // Hide the row if it doesn't match the search input
@@ -410,7 +591,7 @@ function handleSearch() {
     });
 }
 
-// Add event listeners to the search button and input fields for both title and author
+// Add event listeners to the search button and input fields for title, author, and genre
 document.getElementById('searchButton').addEventListener('click', handleSearch);
 document.getElementById('titleInput').addEventListener('keyup', function(event) {
     if (event.keyCode === 13) { // Check if Enter key is pressed
@@ -422,6 +603,7 @@ document.getElementById('authorInput').addEventListener('keyup', function(event)
         handleSearch();
     }
 });
+document.getElementById('genreSelect').addEventListener('change', handleSearch); // Add genre filter change event
 </script>
 <script>
         // Event listener for cancel search button
@@ -485,7 +667,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <p><strong>ISBN:</strong> ${data.ISBN}</p>
                                 <p><strong>Shelf Number:</strong> ${data.shlf_num}</p>
                                 <p><strong>Condition:</strong> ${data.cndtn}</p>
-                                <p><strong>Additional Info:</strong> ${data.add_info}</p>
+                                <p><strong>Cataloging Notes:</strong> ${data.cataloging_notes}</p>
                                 <p><strong>Status:</strong> ${data.status}</p>
                             </span>
                             `,

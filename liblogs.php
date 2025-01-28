@@ -6,32 +6,34 @@ include 'config.php';
 if(isset($_GET['aid'])) {
     $aid = $_GET['aid'];
 
-    // Prepare query to fetch the username corresponding to the aid
-    $query = "SELECT username FROM admin WHERE aid = ?";
-    $stmt = $mysqli->prepare($query);
-    if ($stmt === false) {
-        die("Error in preparing statement: " . $mysqli->error);
-    }
+// Fetch the 'name' column along with 'username'
+$query = "SELECT username, name FROM admin WHERE aid = ?";
+$stmt = $mysqli->prepare($query);
+if ($stmt === false) {
+    die("Error in preparing statement: " . $mysqli->error);
+}
 
-    // Bind parameters and execute
-    $stmt->bind_param("i", $aid);
-    if (!$stmt->execute()) {
-        die("Error in executing statement: " . $stmt->error);
-    }
+// Bind parameters and execute
+$stmt->bind_param("i", $aid);
+if (!$stmt->execute()) {
+    die("Error in executing statement: " . $stmt->error);
+}
 
-    // Get result
-    $result = $stmt->get_result();
+// Get result
+$result = $stmt->get_result();
 
-    // Check if the result is not empty
-    if ($result && $result->num_rows > 0) {
-        $admin = $result->fetch_assoc();
-        $admin_username_display = $admin['username'];
-    } else {
-        // Display a default message if admin username is not found
-        $admin_username_display = "Username";
-    }
-    // Close statement
-    $stmt->close();
+// Check if the result is not empty
+if ($result && $result->num_rows > 0) {
+    $admin = $result->fetch_assoc();
+    $admin_username_display = $admin['username'];
+    $admin_name_display = $admin['name']; // Fetch the 'name' column
+} else {
+    $admin_username_display = "Username";
+    $admin_name_display = "Name";
+}
+
+// Close statement
+$stmt->close();
 }
 
 // Check if 'id' parameter is present in the POST data
@@ -70,6 +72,7 @@ if(isset($_POST['id'])) {
 // Initialize search parameters
 $search = isset($_GET['search']) ? $_GET['search'] : '';
 $user_type = isset($_GET['user_type']) ? $_GET['user_type'] : '';
+$course = isset($_GET['course']) ? $_GET['course'] : '';
 $start_date = isset($_GET['start_date']) ? $_GET['start_date'] : '';
 $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : '';
 $purpose = isset($_GET['purpose']) ? $_GET['purpose'] : '';
@@ -77,35 +80,45 @@ $idnum = isset($_GET['idnum']) ? $_GET['idnum'] : '';
 $year_level = isset($_GET['year_level']) ? $_GET['year_level'] : '';
 $gender = isset($_GET['gender']) ? $_GET['gender'] : '';
 
-// Modify the query to include only archived entries
-$query = "SELECT * FROM chkin WHERE archived = ''";
+// Check if any filters are set
+$filtersApplied = !empty($search) || !empty($user_type) || !empty($course) || !empty($start_date) || !empty($end_date) || !empty($purpose) || !empty($idnum) || !empty($year_level) || !empty($gender);
 
-// Add conditions to the query based on search parameters
-if(!empty($search)) {
-    $query .= " AND info LIKE '%" . $mysqli->real_escape_string($search) . "%'";
-}
-if(!empty($user_type)) {
-    $query .= " AND user_type = '" . $mysqli->real_escape_string($user_type) . "'";
-}
-if(!empty($start_date)) {
-    $start_date = date("Y-m-d", strtotime($start_date));
-    $query .= " AND STR_TO_DATE(date, '%m-%d-%Y') >= '" . $start_date . "'";
-}
-if(!empty($end_date)) {
-    $end_date = date("Y-m-d", strtotime($end_date));
-    $query .= " AND STR_TO_DATE(date, '%m-%d-%Y') <= '" . $end_date . "'";
-}   
-if(!empty($purpose)) {
-    $query .= " AND purpose = '" . $mysqli->real_escape_string($purpose) . "'";
-}
-if (!empty($idnum)) {
-    $query .= " AND idnum LIKE '%" . $mysqli->real_escape_string($idnum) . "%'";
-}
-if (!empty($year_level)) {
-    $query .= " AND year_level = '" . $mysqli->real_escape_string($year_level) . "'";
-}
-if (!empty($gender)) {
-    $query .= " AND gender = '" . $mysqli->real_escape_string($gender) . "'";
+if ($filtersApplied) {
+    // Fetch data based on the filters
+    $query = "SELECT * FROM chkin WHERE archived = ''";
+
+    if(!empty($search)) {
+        $query .= " AND info LIKE '%" . $mysqli->real_escape_string($search) . "%'";
+    }
+    if(!empty($course)) {
+        $query .= " AND info LIKE '%" . $mysqli->real_escape_string($course) . "%'";
+    }
+    if(!empty($user_type)) {
+        $query .= " AND user_type = '" . $mysqli->real_escape_string($user_type) . "'";
+    }
+    if(!empty($start_date)) {
+        $start_date = date("Y-m-d", strtotime($start_date));
+        $query .= " AND STR_TO_DATE(date, '%m-%d-%Y') >= '" . $start_date . "'";
+    }
+    if(!empty($end_date)) {
+        $end_date = date("Y-m-d", strtotime($end_date));
+        $query .= " AND STR_TO_DATE(date, '%m-%d-%Y') <= '" . $end_date . "'";
+    }
+    if(!empty($purpose)) {
+        $query .= " AND purpose = '" . $mysqli->real_escape_string($purpose) . "'";
+    }
+    if (!empty($idnum)) {
+        $query .= " AND idnum LIKE '%" . $mysqli->real_escape_string($idnum) . "%'";
+    }
+    if (!empty($year_level)) {
+        $query .= " AND year_level = '" . $mysqli->real_escape_string($year_level) . "'";
+    }
+    if (!empty($gender)) {
+        $query .= " AND gender = '" . $mysqli->real_escape_string($gender) . "'";
+    }
+} else {
+    // Default to no data if no filters are applied
+    $query = "SELECT * FROM chkin WHERE 0";
 }
 
 // Execute the query
@@ -141,11 +154,10 @@ if ($result === false) {
         }
         ?>
         <a href="admin_dash.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Dashboard</a>
-        <a href="admin_pf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Profile</a>
+        <a href="admin_pf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Credentials</a>
         <a href="admin_srch.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Accounts</a>
         <a href="admin_attd.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item active">Library Logs</a>
         <a href="admin_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Statistics</a>
-        <a href="admin_wres.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Walk-in-Borrow</a>
         <a href="admin_preq.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Pending Requests</a>
         <a href="admin_brel.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Borrowed Books</a>
         <a href="admin_ob.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Overdue Books</a>
@@ -163,6 +175,7 @@ if ($result === false) {
         <nav class="secondary-navbar">
             <a href="admin_attd.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="secondary-navbar-item">Attendance</a>
             <a href="liblogs.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="secondary-navbar-item active">User Logs</a>
+            <a href="admin_accred.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="secondary-navbar-item">User Monitoring</a>
             <a href="admin_aliblogs.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="secondary-navbar-item">Archived User Logs</a>
         </nav>
     </div>
@@ -188,6 +201,14 @@ if ($result === false) {
                         <option value="Visitor" <?php if($user_type == "Visitor") echo "selected"; ?>>Visitor</option>
                         <option value="Staff" <?php if($user_type == "Staff") echo "selected"; ?>>Staff</option>
                     </select>
+                    <select name="course">
+                        <option value="" <?php if(empty($course)) echo "selected"; ?>>Course:</option>
+                        <option value="BSESM" <?php if($course == "BSESM") echo "selected"; ?>>BSESM</option>
+                        <option value="BSIT" <?php if($course == "BSIT") echo "selected"; ?>>BSIT</option>
+                        <option value="BSMET" <?php if($course == "BSMET") echo "selected"; ?>>BSMET</option>
+                        <option value="BSNAME" <?php if($course == "BSNAME") echo "selected"; ?>>BSNAME</option>
+                        <option value="BSTCM" <?php if($course == "BSTCM") echo "selected"; ?>>BSTCM</option>
+                    </select>
                     <select name="year_level">
                         <option value="" <?php if(empty($year_level)) echo "selected"; ?>>Year Level:</option>
                         <option value="1st Year" <?php if($year_level == "1st Year") echo "selected"; ?>>1st Year</option>
@@ -203,7 +224,6 @@ if ($result === false) {
                         <option value="Female" <?php if($gender == "Female") echo "selected"; ?>>Female</option>
                         <option value="Non-Binary" <?php if($gender == "Non-Binary") echo "selected"; ?>>Non-Binary</option>
                     </select>
-                    <br>
                     <label for="start-date">From:</label>
                     <input type="date" id="start-date" name="start_date" value="<?php echo $start_date; ?>">
                     <label for="end-date">To:</label>
@@ -219,7 +239,7 @@ if ($result === false) {
                     </select>
                     <?php if(isset($aid)) echo '<input type="hidden" name="aid" value="'.$aid.'">'; ?>
                     <button type="submit"><i class="fas fa-search"></i> Search</button>
-                    <button type="button" onclick="clearForm()">Clear</button>
+                    <button type="button" onclick="clearForm()"><i class="fa-regular fa-circle-xmark"></i> Clear</button>
                 </div>
             </form>
     </div>
@@ -227,7 +247,7 @@ if ($result === false) {
         if ($result && $result->num_rows > 0) {
             echo '<table id="dataTable">';
             echo '<thead>';
-            echo '<tr><th>#</th><th>User Info</th><th>ID Number</th><th>User Type</th><th>Year Level</th><th>Gender</th><th>Date</th><th>Time In</th><th>Time Out</th><th>Purpose</th><th colspan="2">Actions</th></tr>';
+            echo '<tr><th>#</th><th>User Info</th><th>ID Number</th><th>User Type</th><th>Year Level</th><th>Gender</th><th>Date</th><th>Time In</th><th>Time Out</th><th>Purpose</th><th colspan="2">Archive</th></tr>';
             echo '</thead>';
             echo '<tbody id="dataTableBody">';
 
@@ -247,15 +267,15 @@ if ($result === false) {
                 echo '<td>' . $row['timein'] . '</td>';
                 echo '<td>' . ($row['timeout'] ? $row['timeout'] : 'N/A') . '</td>';
                 echo '<td>' . $row['purpose'] . '</td>';
-                echo '<td hidden><button class="edit-btn" onclick="editBook(' . $row['id'] . ')"><i class="fas fa-edit"></i></button></td>';
-                echo '<td style="text-align: center;"><button class="delete-btn" onclick="deleteEntry(' . $row['id'] . ', ' . $aid . ')"><i class="fas fa-trash-alt"></i></button></td>';
+                echo '<td><button class="edit-btn" onclick="editBook(' . $row['id'] . ')"><i class="fas fa-edit"></i></button></td>';
+                echo '<td style="text-align: center;"><button class="delete-btn" onclick="deleteEntry(' . $row['id'] . ', ' . $aid . ')"><i class="fas fa-archive"></i></button></td>';
                 echo '</tr>';
             }
 
             echo '</tbody>';
             echo '</table>';
         } else {
-            echo '<p>No data found.</p>';
+            echo '<p>No data available. Please apply filters to search.</p>';
         }
 
         // Free the result set
@@ -267,7 +287,21 @@ if ($result === false) {
         $mysqli->close();
         ?>
 </div>
-    <button class="print-button" onclick="printData()">Print Data</button> <!-- Button to print data -->
+<span hidden id="admin-name"><?php echo htmlspecialchars($admin_name_display); ?></span>
+<!-- Add this button beside 'Print Data' -->
+<form method="POST" action="export_to_excel.php">
+    <input type="hidden" name="search" value="<?php echo $search; ?>">
+    <input type="hidden" name="idnum" value="<?php echo $idnum; ?>">
+    <input type="hidden" name="user_type" value="<?php echo $user_type; ?>">
+    <input type="hidden" name="course" value="<?php echo $course; ?>">
+    <input type="hidden" name="year_level" value="<?php echo $year_level; ?>">
+    <input type="hidden" name="gender" value="<?php echo $gender; ?>">
+    <input type="hidden" name="start_date" value="<?php echo $start_date; ?>">
+    <input type="hidden" name="end_date" value="<?php echo $end_date; ?>">
+    <input type="hidden" name="purpose" value="<?php echo $purpose; ?>">
+    <button class="print-button" type="submit"><i class="fas fa-file-excel"></i> Export to Excel</button>
+</form>
+    <button class="print-button" onclick="printData()"><i class='fas fa-print'></i> Print Data</button> <!-- Button to print data -->
     
     <script>
     // Function to clear the search form and redirect back to liblogs.php
@@ -281,33 +315,10 @@ if ($result === false) {
 
     <script>
 function printData() {
-    var startDate = document.getElementById("start-date").value;
-    var endDate = document.getElementById("end-date").value;
-    var heading = "<h2>Library Users ";
-    if (startDate && endDate) {
-        // Convert dates to "Month Day, Year" format
-        startDate = formatReadableDate(startDate);
-        endDate = formatReadableDate(endDate);
-        heading += "from " + startDate + " to " + endDate;
-    } else {
-        heading += "for All Dates";
-    }
-    heading += "</h2>";
-    
-    var table = document.getElementById("dataTable").cloneNode(true); // Clone the table
-    var headerRow = table.querySelector("thead tr"); // Get the header row
-    headerRow.deleteCell(headerRow.cells.length - 1); // Remove the last cell from the header row
-
-    var rows = table.querySelectorAll("tbody tr"); // Get all data rows
-    rows.forEach(function(row) {
-        row.deleteCell(row.cells.length - 1); // Remove the last cell from each row
-    });
-
-    var printContents = heading + table.outerHTML; // Get the outer HTML of the modified table
-    var originalContents = document.body.innerHTML;
-    document.body.innerHTML = printContents;
-    window.print();
-    document.body.innerHTML = originalContents;
+    const queryString = window.location.search; // Get the current query string
+    const adminName = encodeURIComponent(document.querySelector('#admin-name').textContent.trim()); // Assuming 'name' is in an element with id 'admin-name'
+    const printUrl = `print_liblogs.php${queryString}&name=${adminName}`; // Append the 'name' value to the query string
+    window.open(printUrl, '_blank'); // Open in a new tab
 }
 
 function formatReadableDate(date) {

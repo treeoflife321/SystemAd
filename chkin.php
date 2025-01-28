@@ -68,6 +68,135 @@ if(isset($_GET['aid'])) {
     background-color: gold;
     color: black;
 }
+
+/* The Modal (background) */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed;
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black with opacity */
+    padding-top: 60px;
+}
+
+/* Modal Content */
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 30px;
+    border: 2px solid #888;
+    border-radius: 10px;
+    width: 60%; /* Reduced width for better visual balance */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add shadow for depth */
+    text-align: center; /* Center text and form inside */
+}
+
+/* Form labels */
+.modal-content label {
+    font-size: 24px;
+    margin: 10px 0;
+    display: block;
+}
+
+/* Form input fields */
+.modal-content input,
+.modal-content select {
+    width: 90%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 20px;
+}
+
+/* Submit Button (inside modal) */
+.modal-content button {
+    background-color: #4CAF50; /* Green background */
+    color: white; /* White text */
+    padding: 12px 20px;
+    font-size: 18px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: inline-block; /* Make button fit content */
+}
+
+.modal-content button:hover {
+    background-color: #45a049; /* Darker green on hover */
+}
+
+/* Close Button */
+.close {
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    position: absolute;
+    top: 10px;
+    right: 25px;
+    cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Modal Button */
+#openModalBtn {
+    background-color: #4CAF50; /* Green background */
+    color: white; /* White text */
+    border: none;
+    padding: 12px 20px;
+    font-size: 18px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: block;
+    margin: 20px auto; /* Center the button */
+}
+
+#openModalBtn:hover {
+    background-color: #45a049; /* Darker green when hovered */
+}
+
+.input-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .input-container input {
+            width: 300px;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .input-container button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .input-container button:hover {
+            background-color: #45a049;
+        }
 </style>
 </head>
 <body class="bg">
@@ -86,12 +215,15 @@ if(isset($_GET['aid'])) {
     
     <div class="content-container">
         <div class="container-inner">
-            <h1>Scan Here</h1>
-            <h2>ID QR Code</h2>
-            <video id="qr-video" width="450px"></video>
-            <h2>Time In/Out</h2>
+            <h1>Scan ID QR Code</h1>
+            <img src="css/pics/scan.png" alt="scan-instructions" style= 'max-width:500px; max-height:300px;'>
+            <div class="input-container">
+                <input type="text" id="qr-input" placeholder="Scan QR Code here" autofocus>
+                <button id="time-in-out-btn">Time In/Out</button>
+            </div>
         </div>
     </div>
+
 <div class="purpose-container">
     <h3>Select Purpose:</h3>
     <div class="purpose-buttons">
@@ -103,48 +235,61 @@ if(isset($_GET['aid'])) {
     <button class="purpose-btn" data-purpose="Return Book(s)">Return Book(s)</button>
     </div>
 </div>
-<button id="toggle-camera-btn" class="purpose-btn">Switch Camera</button>
+<!-- Modal Structure -->
+<div id="checkinModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Check-In</h2>
+        <form id="checkinForm">
+            <label for="idnum">ID Number:</label>
+            <input type="text" id="idnum" name="idnum" required>
+            <label for="purpose">Purpose:</label>
+            <select id="purpose" name="purpose" required>
+                <option value="Study">Study</option>
+                <option value="Research">Research</option>
+                <option value="Printing">Printing</option>
+                <option value="Clearance">Clearance</option>
+                <option value="Borrow Book(s)">Borrow Book(s)</option>
+                <option value="Return Book(s)">Return Book(s)</option>
+            </select>
+            <button type="submit" class="purpose-btn">Submit</button>
+        </form>
+    </div>
+</div>
+<center><h3>OR</h3></center>
+<!-- Button to open modal -->
+<button id="openModalBtn" class="id-chk">Check In/Out Using ID Number</button>
+ 
+<!-- <button id="toggle-camera-btn" class="purpose-btn">Switch Camera</button> -->
 
     <div hidden id="scanned-results"></div>
 
 <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    let scanner = new Instascan.Scanner({ video: document.getElementById('qr-video') });
-    let cameras = [];
-    let currentCameraIndex = 0; // Start with the first camera
+        document.addEventListener('DOMContentLoaded', function () {
+            const qrInput = document.getElementById('qr-input');
+            const timeInOutBtn = document.getElementById('time-in-out-btn');
+            
+            qrInput.addEventListener('keypress', function (event) {
+                if (event.key === 'Enter') {
+                    timeInOutBtn.click(); // Trigger button click on Enter key
+                }
+            });
 
-    scanner.addListener('scan', function (content) {
-        handleScannedResult(content);
-    });
-
-    Instascan.Camera.getCameras().then(function (availableCameras) {
-        cameras = availableCameras;
-        if (cameras.length > 0) {
-            // Start the scanner with the first available camera
-            scanner.start(cameras[currentCameraIndex]);
-        } else {
-            console.error('No cameras found.');
-        }
-    }).catch(function (e) {
-        console.error(e);
-    });
-
-    // Toggle camera button functionality
-    document.getElementById('toggle-camera-btn').addEventListener('click', function () {
-        if (cameras.length > 1) {
-            // Stop the current camera
-            scanner.stop();
-
-            // Switch to the next camera
-            currentCameraIndex = (currentCameraIndex + 1) % cameras.length;
-
-            // Start the scanner with the new camera
-            scanner.start(cameras[currentCameraIndex]);
-        } else {
-            console.error('No other cameras available.');
-        }
-    });
+            timeInOutBtn.addEventListener('click', function () {
+                const qrCode = qrInput.value.trim();
+                if (qrCode) {
+                    handleScannedResult(qrCode);
+                } else {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'No Input',
+                        text: 'Please scan or enter a QR code.',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }
+            });
 
     function handleScannedResult(content) {
         const resultContainer = document.createElement('div');
@@ -195,8 +340,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     text: data.info,
                     timer: 5000,
                     showConfirmButton: false
-                });
-                resetPurposeSelection();
+                    }).then(() => {
+        location.reload(); // Refresh the page after the alert is closed
+    });
+    resetPurposeSelection();
             } else {
                 Swal.fire({
                     icon: 'error',
@@ -204,7 +351,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     text: data.message,
                     timer: 5000,
                     showConfirmButton: false
-                });
+                    }).then(() => {
+        location.reload(); // Refresh the page after the alert is closed
+    });
             }
         })
         .catch(error => {
@@ -224,6 +373,86 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
+
+<script>
+// ID number check in/out
+document.addEventListener('DOMContentLoaded', function () {
+    const modal = document.getElementById("checkinModal");
+    const openModalBtn = document.getElementById("openModalBtn");
+    const closeBtn = document.querySelector(".close");
+
+    openModalBtn.addEventListener("click", function () {
+        modal.style.display = "block";
+    });
+
+    closeBtn.addEventListener("click", function () {
+        modal.style.display = "none";
+    });
+
+    window.addEventListener("click", function (event) {
+        if (event.target === modal) {
+            modal.style.display = "none";
+        }
+    });
+
+    document.getElementById("checkinForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        let idnum = document.getElementById("idnum").value;
+        let purpose = document.getElementById("purpose").value;
+
+        // Get current date and time
+        let currentDate = new Date();
+        let date = ("0" + (currentDate.getMonth() + 1)).slice(-2) + "-" +
+            ("0" + currentDate.getDate()).slice(-2) + "-" + currentDate.getFullYear();
+        let time = currentDate.toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+
+        // Perform AJAX request to handle timeout or new check-in
+        fetch('idchkin.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `idnum=${encodeURIComponent(idnum)}&purpose=${encodeURIComponent(purpose)}&date=${encodeURIComponent(date)}&timein=${encodeURIComponent(time)}`
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: data.message,
+                        timer: 3000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        location.reload(); // Refresh the page
+                    });
+                    modal.style.display = "none";
+                    document.getElementById("checkinForm").reset();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'There was an issue with your check-in.',
+                        timer: 3000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        location.reload(); // Optional: Refresh for consistency
+                    });
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred. Please try again.',
+                    timer: 3000,
+                    showConfirmButton: false
+                }).then(() => {
+                    location.reload(); // Optional: Refresh for error case
+                });
+            });
+    });
+});
+</script>
+
 <script>
         function updateTime() {
             var currentDate = new Date();

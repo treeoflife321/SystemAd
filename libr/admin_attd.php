@@ -306,6 +306,56 @@ updateYearLevelIfEmpty($mysqli);
 // Call the function to handle empty `gender`
 updateGenderIfEmpty($mysqli);
 ?>
+<?php
+// Function to update data if idnum only exist
+function updatednum($mysqli) {
+    // Query to fetch the records from the chkin table where info, user_type, year_level, and gender are empty
+    $query = "SELECT idnum FROM chkin WHERE (info = '' AND user_type = '' AND year_level = '' AND gender = '')";
+    $result = $mysqli->query($query);
+    
+    // Check if there are any results
+    if ($result && $result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $idnum = $row['idnum'];
+
+            // Query to fetch the user's data from the users table based on the idnum
+            $userQuery = "SELECT info, user_type, year_level, gender FROM users WHERE idnum = ?";
+            $stmt = $mysqli->prepare($userQuery);
+            $stmt->bind_param("s", $idnum);
+            $stmt->execute();
+            $userResult = $stmt->get_result();
+
+            // Check if the user exists in the users table
+            if ($userResult && $userResult->num_rows > 0) {
+                $user = $userResult->fetch_assoc();
+
+                // Prepare the data to be updated in chkin table
+                $info = $user['info'];
+                $user_type = $user['user_type'];
+                $year_level = $user['year_level'];
+                $gender = $user['gender'];
+
+                // Update the chkin table with the missing data
+                $updateQuery = "UPDATE chkin SET info = ?, user_type = ?, year_level = ?, gender = ? WHERE idnum = ?";
+                $updateStmt = $mysqli->prepare($updateQuery);
+                $updateStmt->bind_param("sssss", $info, $user_type, $year_level, $gender, $idnum);
+                $updateStmt->execute();
+                $updateStmt->close();
+            }
+            $userResult->free();
+            $stmt->close();
+        }
+    } else {
+         error_log("No records with missing data found in chkin table.");
+    }
+
+    $result->free();
+}
+
+//Call the function to update idnum
+updatednum($mysqli);
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -335,7 +385,6 @@ updateGenderIfEmpty($mysqli);
         <a href="admin_pf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Profile</a>
         <a href="admin_attd.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item active">Library Logs</a>
         <a href="admin_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Statistics</a>
-        <a href="admin_wres.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Walk-in-Borrow</a>
         <a href="admin_preq.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Pending Requests</a>
         <a href="admin_brel.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Borrowed Books</a>
         <a href="admin_ob.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Overdue Books</a>
@@ -367,6 +416,7 @@ updateGenderIfEmpty($mysqli);
         <div class="search-bar">
             <h1>Library Users Today:</h1>
             <button type="button" onclick="addUserPopup()"><i class='fas fa-plus'></i> New Library User</button>
+            <button type="button" onclick="updateCheckOutTime()"><i class='fas fa-clock'></i> Update Check-Out Time</button>
         </div>
         <?php
         // Get the current date
@@ -424,10 +474,49 @@ updateGenderIfEmpty($mysqli);
         ?>
     </div>
     <script>
+function updateCheckOutTime() {
+    // Show SweetAlert confirmation dialog
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "This will update the check-out time for all users without one.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, update it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Send an AJAX request to update the timeout
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", "../update_timeout.php", true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: xhr.responseText,
+                        icon: 'success'
+                    }).then(() => {
+                        location.reload(); // Reload the page to reflect changes
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: "An error occurred while updating check-out times.",
+                        icon: 'error'
+                    });
+                }
+            };
+            xhr.send("action=update_timeout");
+        }
+    });
+}
+</script>
+    <script>
 function addUserPopup() {
     Swal.fire({
         title: 'Add Library User',
-        html: `<input type="text" id="userInfo" class="swal2-input" placeholder="User Info">
+        html: `<input type="text" id="userInfo" class="swal2-input" placeholder="User Info" style='width:80%;'>
                <select id="userType" class="swal2-input">
                    <option value="" disabled selected>User Type</option>
                    <option value="Student">Student</option>
@@ -531,6 +620,53 @@ function addUserPopup() {
                 }
             }
         }
+</script>
+<script>
+let previousCount = 0;
+
+function checkForNewEntries() {
+    $.ajax({
+        url: 'check_new_entries.php',
+        method: 'GET',
+        success: function(response) {
+            try {
+                const data = JSON.parse(response);
+                const currentCount = data.count;
+
+                // Check if the count has increased
+                if (currentCount > previousCount) {
+                    previousCount = currentCount; // Update the previous count
+                    location.reload(); // Refresh the page
+                }
+            } catch (e) {
+                console.error('Error parsing response:', response);
+            }
+        },
+        error: function() {
+            console.error('Failed to fetch new entries.');
+        }
+    });
+}
+
+// Initial fetch to set the previous count
+$.ajax({
+    url: 'check_new_entries.php',
+    method: 'GET',
+    success: function(response) {
+        try {
+            const data = JSON.parse(response);
+            previousCount = data.count; // Set the initial count
+        } catch (e) {
+            console.error('Error initializing previous count:', response);
+        }
+    },
+    error: function() {
+        console.error('Failed to initialize previous count.');
+    }
+});
+
+// Poll the server every 3 seconds
+setInterval(checkForNewEntries, 3000);
 </script>
 </body>
 </html>

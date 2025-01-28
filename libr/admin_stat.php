@@ -120,7 +120,6 @@ $total_users = array_sum($user_counts);
         justify-content: space-around;
         flex-wrap: wrap;
         padding: 10px; /* Added padding to create space around charts */
-        
         background-color: white;
         border-radius: 15px;
         width: 96%;
@@ -140,18 +139,24 @@ $total_users = array_sum($user_counts);
         text-align: center;
         
     }
+    .ustp-header{
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto;
+        display: block;
+    }
 
 /* CSS for printing */
 @media print {
     @page {
         size: A4 landscape; /* A4 paper in landscape mode */
-        margin: 5mm; /* Reduced margins for more content space */
+        margin: 10mm; /* Standard margin for A4 */
     }
 
     body {
         background-color: white !important;
         margin: 0 !important;
-        font-size: 12px; /* Reduce font size for print */
+        font-size: 16px; /* Slightly smaller font size */
     }
 
     .sidebar, .fixed-date-time, .search-bar, .print-button, .secondary-navbar {
@@ -165,25 +170,25 @@ $total_users = array_sum($user_counts);
 
     .chart-container {
         display: flex !important;
-        flex-wrap: nowrap !important;
-        justify-content: center !important; /* Center the charts */
-        padding: 0 !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        padding: 5px !important;
         background-color: white !important;
         width: 100%;
         overflow: hidden;
     }
 
     .chart {
-        width: 100% !important; /* Reduced width to fit on one page */
-        height: 300px !important; /* Reduce height to fit content */
-        margin: 0 10px !important; /* Margin between charts */
+        width: 290px !important; /* Adjust chart width for fitting */
+        height: 230px !important; /* Reduce height to fit content */
+        margin: 0 10px !important; /* Space between charts */
     }
 
     .chart-counts {
         display: block !important;
         color: black !important;
         text-align: center;
-        font-size: 12px; /* Reduce font size */
+        font-size: 16px; /* Slightly reduced font size */
     }
 
     #date-range-heading {
@@ -194,19 +199,31 @@ $total_users = array_sum($user_counts);
     }
 
     .header img {
-        width: 100%; /* Adjust to ensure the image fits */
-        max-width: 600px; /* Limit the max width */
+        width: 60%; /* Adjust to ensure the image fits */
+        max-width: 400px; /* Limit the max width */
         height: auto;
+        margin: 0 auto;
+        display: block;
     }
 
     h2 {
-        font-size: 14px !important; /* Reduce heading size */
+        font-size: 16px !important; /* Reduce heading size */
         text-align: center;
         margin: 10px 0 !important;
     }
 
     .chart-container div {
-        margin-bottom: 20px; /* Reduce margin */
+        margin-bottom: 15px; /* Reduced margin */
+    }
+
+    .prepared-by {
+        margin-top: 10px;
+        font-size: 16px;
+        text-align: left;
+    }
+
+    .prepared-by p {
+        margin: 2px 0;
     }
 }
 </style>
@@ -228,7 +245,6 @@ $total_users = array_sum($user_counts);
         <a href="admin_pf.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Profile</a>
         <a href="admin_attd.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Library Logs</a>
         <a href="admin_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item active">User Statistics</a>
-        <a href="admin_wres.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Walk-in-Borrow</a>
         <a href="admin_preq.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Pending Requests</a>
         <a href="admin_brel.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Borrowed Books</a>
         <a href="admin_ob.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Overdue Books</a>
@@ -244,7 +260,9 @@ $total_users = array_sum($user_counts);
 
     <div class="content">
         <nav class="secondary-navbar">
-            <a href="admin_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="secondary-navbar-item active">Charts</a>
+        <a href="admin_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="secondary-navbar-item active">Library User Charts</a>
+            <a href="admin_yr_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="secondary-navbar-item">Year Level Graph</a>
+            <a href="admin_prps_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="secondary-navbar-item">User Purpose Graph</a>
             <a href="admin_win.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="secondary-navbar-item">Top Library User</a>
             <a href="admin_win2.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="secondary-navbar-item">Top Book Borrrower</a>
         </nav>
@@ -264,7 +282,7 @@ $total_users = array_sum($user_counts);
                 <input type="date" id="start_date" name="start_date" value="<?php echo isset($start_date) ? $start_date : ''; ?>">
                 <label for="end_date">To:</label>
                 <input type="date" id="end_date" name="end_date" value="<?php echo isset($end_date) ? $end_date : ''; ?>">
-                <button type="submit">Filter</button>
+                <button type="submit"><i class='fas fa-filter'></i> Filter</button>
             </form>
         </div>
 
@@ -281,7 +299,7 @@ $total_users = array_sum($user_counts);
             }
             ?>
         </div>
-        
+        <center>
         <div class="chart-container">
             <div>
                 <canvas id="userTypeChart" class="chart"></canvas>
@@ -306,7 +324,19 @@ $total_users = array_sum($user_counts);
             </div>
         </div>
 
-        <button class="print-button" onclick="window.print()">Print Charts</button>
+<?php
+// Get the name from the URL
+$name = isset($_GET['name']) ? htmlspecialchars($_GET['name']) : 'Admin';
+?>
+<div style="margin-top: 20px; text-align: left; font-size: 16px;">
+    <p style="margin-bottom: 0px;">Prepared By:</p>
+    <p style="margin-top: 5px; margin-left: 35px; margin-bottom: 0px; ">
+        <?php echo isset($admin_username_display) ? htmlspecialchars($admin_username_display) : 'Admin'; ?>
+    </p>
+    <p style="margin-top: 0px; text-decoration: overline; margin-left: 18px;">Librarian USTP-Jasaan</p>
+</div>
+
+        <button class="print-button" onclick="window.print()"><i class='fas fa-print'></i> Print Charts</button>
 
     </div>
     </div>
@@ -447,6 +477,7 @@ $total_users = array_sum($user_counts);
     });
 });
 </script>
+</center>
 <script>
             // Dropdown script
             function toggleDropdown(event) {

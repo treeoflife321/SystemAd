@@ -7,7 +7,7 @@ if (isset($_GET['info'])) {
     $toDate = isset($_GET['toDate']) ? $_GET['toDate'] : null;
 
     // Base query to select all data associated with the given info
-    $query = "SELECT date, timein, timeout, purpose FROM chkin WHERE info = ?";
+    $query = "SELECT date, timein, timeout, purpose FROM chkin WHERE info = ? AND archived = '' ";
 
     // Append date filtering if both dates are provided
     if ($fromDate && $toDate) {

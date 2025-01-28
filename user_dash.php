@@ -169,6 +169,29 @@ function getTotalCheckins($uid, $mysqli) {
 // Get the total check-ins for the current user
 $total_checkins = getTotalCheckins($uid, $mysqli);
 ?>
+<?php
+// Query to count available favorite items for the current user
+$query_available_favorites = "SELECT COUNT(*) AS available_favorites_count 
+                               FROM fav 
+                               INNER JOIN inventory ON fav.bid = inventory.bid 
+                               WHERE fav.uid = ? AND inventory.status = 'Available'";
+$stmt_available_favorites = $mysqli->prepare($query_available_favorites);
+$stmt_available_favorites->bind_param("i", $uid);
+$stmt_available_favorites->execute();
+$result_available_favorites = $stmt_available_favorites->get_result();
+
+// Initialize available favorites count
+$available_favorites_count = 0;
+
+// Check if the result is not empty
+if ($result_available_favorites && $result_available_favorites->num_rows > 0) {
+    $row_available_favorites = $result_available_favorites->fetch_assoc();
+    $available_favorites_count = $row_available_favorites['available_favorites_count'];
+}
+
+// Close the statement
+$stmt_available_favorites->close();
+?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -195,8 +218,22 @@ $total_checkins = getTotalCheckins($uid, $mysqli);
         <div class="hell">Hello, <?php echo $user_username_display; ?>!</div>
         <a href="user_dash.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>" class="sidebar-item active">Dashboard</a>
         <a href="user_rsrv.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>" class="sidebar-item">Reserve/Borrow</a>
-        <a href="user_ovrd.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>" class="sidebar-item">Overdue</a>
-        <a href="user_fav.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>" class="sidebar-item">Favorites</a>
+        <a href="user_ovrd.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>" class="sidebar-item" style="position: relative;">
+    Overdue
+    <?php if ($overdued_count > 0): ?>
+        <span style="position: absolute; top: 10%; right: 5%; background-color: red; color: white; border-radius: 50%; padding: 0.2em 0.6em; font-size: 0.8em;">
+            <?php echo $overdued_count; ?>
+        </span>
+    <?php endif; ?>
+</a>
+        <a href="user_fav.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>" class="sidebar-item" style="position: relative;">
+    Favorites
+    <?php if ($available_favorites_count > 0): ?>
+        <span style="position: absolute; top: 10%; right: 5%; background-color: red; color: white; border-radius: 50%; padding: 0.2em 0.6em; font-size: 0.8em;">
+            <?php echo $available_favorites_count; ?>
+        </span>
+    <?php endif; ?>
+</a>
         <a href="user_sebk.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>" class="sidebar-item">E-Books</a>
         <a href="login.php" class="logout-btn">Logout</a>
     </div>

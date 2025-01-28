@@ -61,6 +61,10 @@ function getCurrentFileName() {
 }
 $currentFile = getCurrentFileName();
 ?>
+<?php
+$genre_query = "SELECT DISTINCT genre FROM inventory WHERE genre IS NOT NULL AND genre != ''";
+$genre_result = $mysqli->query($genre_query);
+?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -71,6 +75,12 @@ $currentFile = getCurrentFileName();
     <link rel="icon" type="image/x-icon" href="css/pics/logop.png">
     <link rel="stylesheet" href="css/admin_srch.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+    a {
+        text-decoration: none;
+        color: black;
+    }
+</style>
 </head>
 <body class="bg">
 <div class="sidebar">
@@ -89,7 +99,6 @@ $currentFile = getCurrentFileName();
         <a href="admin_pf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Profile</a>
         <a href="admin_attd.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Library Logs</a>
         <a href="admin_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Statistics</a>
-        <a href="admin_wres.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Walk-in-Borrow</a>
         <a href="admin_preq.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Pending Requests</a>
         <a href="admin_brel.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Borrowed Books</a>
         <a href="admin_ob.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Overdue Books</a>
@@ -105,7 +114,7 @@ $currentFile = getCurrentFileName();
 
     <div class="content">
         <nav class="secondary-navbar">
-            <a href="bk_inv.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="secondary-navbar-item active">Search</a>
+            <a href="bk_inv.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="secondary-navbar-item active">Books</a>
         </nav>
     </div>
 
@@ -128,7 +137,17 @@ $currentFile = getCurrentFileName();
                 <input type="text" id="searchAuthor" name="author" class="input" placeholder="Enter author..." value="<?php echo isset($_GET['author']) ? $_GET['author'] : ''; ?>">
 
                 <label for="searchGenre" class="label"></label>
-                <input type="text" id="searchGenre" name="genre" class="input" placeholder="Enter genre..." value="<?php echo isset($_GET['genre']) ? $_GET['genre'] : ''; ?>">
+                <select id="searchGenre" name="genre" class="input">
+                    <option value="">Select Genre...</option>
+                    <?php
+                    if ($genre_result && $genre_result->num_rows > 0) {
+                        while ($genre_row = $genre_result->fetch_assoc()) {
+                            $selected = (isset($_GET['genre']) && $_GET['genre'] == $genre_row['genre']) ? "selected" : "";
+                            echo '<option value="' . htmlspecialchars($genre_row['genre']) . '" ' . $selected . '>' . htmlspecialchars($genre_row['genre']) . '</option>';
+                        }
+                    }
+                    ?>
+                </select>
 
                 <label for="minDewey" class="label"></label>
                 <input type="number" id="minDewey" name="minDewey" class="input" placeholder="Min Dewey..." value="<?php echo isset($_GET['minDewey']) ? $_GET['minDewey'] : ''; ?>">
@@ -136,8 +155,11 @@ $currentFile = getCurrentFileName();
                 <label for="maxDewey" class="label"></label>
                 <input type="number" id="maxDewey" name="maxDewey" class="input" placeholder="Max Dewey..." value="<?php echo isset($_GET['maxDewey']) ? $_GET['maxDewey'] : ''; ?>">
                 
-                <button type="submit" style="margin-left:15px;">Search</button>
-                <a href="bk_inv.php<?php if(isset($_GET['aid'])) echo '?aid=' . $_GET['aid']; ?>" class="delete-btn">Clear</a> <!-- Added Clear button -->
+                <label for="searchBarcode" class="label"></label>
+                <input type="text" id="searchBarcode" name="barcode" class="input" placeholder="Click here and scan barcode..." value="<?php echo isset($_GET['barcode']) ? $_GET['barcode'] : ''; ?>">
+
+                <button type="submit" style=""><i class='fas fa-search'></i> Search</button>
+                <button type="button"><a href="bk_inv.php<?php if(isset($_GET['aid'])) echo '?aid=' . $_GET['aid']; ?>"><i class="fa-regular fa-circle-xmark"></i> Clear</a></button> <!-- Added Clear button -->
             </form>
         </div>
         <a href="add_bk_inv.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="add-lib"><i class='fas fa-plus'></i> Add Book(s)</a>
@@ -150,7 +172,7 @@ $currentFile = getCurrentFileName();
                     <th>#</th>
                     <th>Title</th>
                     <th>Author</th>
-                    <th>Year</th>
+                    <th>Year Published</th>
                     <th>Genre</th>
                     <th>Dewey Number</th>
                     <th>ISBN</th>
@@ -159,14 +181,14 @@ $currentFile = getCurrentFileName();
                     <th>Additional Info</th>
                     <th>Status</th>
                     <th>Copies</th>
-                    <th colspan="2">Actions:</th>
+                    <th colspan="1">Actions:</th>
                 </tr>
             </thead>
             <tbody>
             <?php
             $query = "SELECT bid, title, author, year, genre, dew_num, ISBN, shlf_num, cndtn, add_info, status, 
-                      (SELECT COUNT(*) FROM inventory i2 WHERE i2.title = i1.title AND i2.author = i1.author AND i2.year = i1.year AND i2.genre = i1.genre AND i2.dew_num = i1.dew_num AND i2.ISBN = i1.ISBN AND i2.shlf_num = i1.shlf_num AND i2.cndtn = i1.cndtn AND i2.add_info = i1.add_info AND i2.status = i1.status) AS copies 
-                      FROM inventory i1 WHERE 1";
+            (SELECT COUNT(*) FROM inventory i2 WHERE i2.title = i1.title AND i2.author = i1.author AND i2.year = i1.year AND i2.genre = i1.genre AND i2.dew_num = i1.dew_num AND i2.ISBN = i1.ISBN AND i2.shlf_num = i1.shlf_num AND i2.cndtn = i1.cndtn AND i2.add_info = i1.add_info AND i2.status = i1.status) AS copies 
+            FROM inventory i1 WHERE 1";
 
             if (isset($_GET['title']) && !empty($_GET['title'])) {
                 $title = $_GET['title'];
@@ -179,6 +201,10 @@ $currentFile = getCurrentFileName();
             if (isset($_GET['genre']) && !empty($_GET['genre'])) {
                 $genre = $_GET['genre'];
                 $query .= " AND genre LIKE '%$genre%'";
+            }
+            if (isset($_GET['barcode']) && !empty($_GET['barcode'])) {
+                $barcode = $_GET['barcode'];
+                $query .= " AND barcode = '$barcode'";
             }
             if (isset($_GET['minDewey']) && !empty($_GET['minDewey'])) {
                 $minDewey = $_GET['minDewey'];
@@ -236,10 +262,10 @@ $currentFile = getCurrentFileName();
                         echo '<td>' . $row['add_info'] . '</td>';
                         echo '<td>' . $row['status'] . '</td>';
                         echo '<td>' . $row['copies'] . '</td>';
-                        echo '<td>';
+                        echo '<td style="text-align:center;">';
                         echo '<button class="edit-btn" onclick="editBook(' . $row['bid'] . ')"><i class="fas fa-edit"></i></button>';
                         echo '</td>';
-                        echo '<td>';
+                        echo '<td hidden>';
                         echo '<form id="delete_form_' . $row['bid'] . '" method="POST">';
                         echo '<input type="hidden" name="delete_bid" value="' . $row['bid'] . '">';
                         echo '<button class="delete-btn" type="button" onclick="deleteBook(' . $row['bid'] . ')"><i class="fas fa-trash-alt"></i></button>';
@@ -265,7 +291,6 @@ $currentFile = getCurrentFileName();
         </table>
     </div>
     <br><br>
-</body>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
 <script>
     // Function to handle book deletion confirmation
@@ -318,4 +343,5 @@ $currentFile = getCurrentFileName();
         updateTime();
         setInterval(updateTime, 1000);
     </script>
+</body>
 </html>

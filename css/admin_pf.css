@@ -157,29 +157,6 @@ input[type="password"] {
     color: black; /* Text color */
 }
 
-button[type="submit"],
-button[type="button"] {
-    width: calc(100% - 10px); /* Adjust width and margin as needed */
-    padding: 10px;
-    border: none;
-    border-radius: 15px;
-    background-color: #004AAD; /* Input box color */
-    color: white; /* Button text color */
-    cursor: pointer;
-}
-
-button[type="submit"]:hover{
-    background-color: green; /* Button background color on hover */
-}
-button[type="button"]:hover {
-    background-color: crimson; /* Button background color on hover */
-}
-
-.button-container {
-    display: flex;
-    justify-content: space-between;
-}
-
 .dropdown-content {
     display: none;
     flex-direction: column;

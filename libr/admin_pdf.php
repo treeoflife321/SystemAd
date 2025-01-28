@@ -84,7 +84,7 @@ if(isset($_POST['delete_pdf_id'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>E-Books</title>
     <link rel="icon" type="image/x-icon" href="css/pics/logop.png">
-    <link rel="stylesheet" href="css/admin_srch.css">
+    <link rel="stylesheet" href="../css/admin_srch.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
 </head>
@@ -105,7 +105,6 @@ if(isset($_POST['delete_pdf_id'])) {
     <a href="admin_pf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Profile</a>
     <a href="admin_attd.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Library Logs</a>
     <a href="admin_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Statistics</a>
-    <a href="admin_wres.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Walk-in-Borrow</a>
     <a href="admin_preq.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Pending Requests</a>
     <a href="admin_brel.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Borrowed Books</a>
     <a href="admin_ob.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Overdue Books</a>
@@ -137,7 +136,7 @@ if(isset($_POST['delete_pdf_id'])) {
         <input type="text" id="searchAuthor" placeholder="Search by Author..." onkeyup="searchTable()">
         <input type="text" id="searchYear" placeholder="Search by Year..." onkeyup="searchTable()">
         <input type="text" id="searchGenre" placeholder="Search by Genre..." onkeyup="searchTable()">
-        <button class="delete-btn" id="clearButton" onclick="clearSearch()">Clear</button>
+        <button type="button" id="clearButton" onclick="clearSearch()"><i class="fa-regular fa-circle-xmark"></i> Clear</button>
     </div>
     <a href="admin_add_pdf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="add-lib"><i class='fas fa-plus'></i> Add E-Book</a>
 

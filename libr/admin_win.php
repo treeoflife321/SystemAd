@@ -42,31 +42,39 @@ function convertDateFormat($date) {
     return date("m-d-Y", strtotime($date));
 }
 
-// Function to fetch and display the top 5 most frequent 'info' values along with 'user_type'
+// Function to fetch and display the top 8 most frequent 'info' values along with 'user_type'
 function displayTopInfo($mysqli, $fromDate = null, $toDate = null) {
-    $query = "SELECT info, user_type, COUNT(info) AS count FROM chkin ";
+    // Start the query with a condition for archived = ''
+    $query = "SELECT info, user_type, COUNT(info) AS count FROM chkin WHERE archived = '' ";
 
+    // Add date filtering conditions if provided
     if ($fromDate && $toDate) {
-        $query .= "WHERE date >= ? AND date <= ? ";
+        $query .= "AND date >= ? AND date <= ? ";
     }
 
+    // Group by info and user_type, and order by the count in descending order
     $query .= "GROUP BY info, user_type ORDER BY count DESC LIMIT 8";
 
+    // Prepare the SQL statement
     $stmt = $mysqli->prepare($query);
 
+    // Bind parameters if date filters are provided
     if ($fromDate && $toDate) {
         $stmt->bind_param("ss", $fromDate, $toDate);
     }
 
+    // Execute the statement
     $stmt->execute();
     $result = $stmt->get_result();
 
+    // Check if there are results
     if ($result && $result->num_rows > 0) {
         echo '<div class="portrait-container">';
         while ($row = $result->fetch_assoc()) {
             $info = htmlspecialchars($row['info']);
             $truncated_info = (strlen($info) > 30) ? substr($info, 0, 30) . '...' : $info;
 
+            // Fetch the user's profile image
             $user_query = "SELECT profile_image FROM users WHERE info = ?";
             $user_stmt = $mysqli->prepare($user_query);
             $user_stmt->bind_param("s", $row['info']);
@@ -81,6 +89,7 @@ function displayTopInfo($mysqli, $fromDate = null, $toDate = null) {
             }
             $user_stmt->close();
 
+            // Display the portrait
             echo '<div class="portrait" data-info="' . $info . '">';
             echo '<img src="../' . $profile_image . '" alt="Profile Image" class="profile-image">';
             echo '<p class="info-text">' . $truncated_info . '</p>';
@@ -212,7 +221,6 @@ th, td {
         <a href="admin_pf.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Profile</a>
         <a href="admin_attd.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Library Logs</a>
         <a href="admin_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item active">User Statistics</a>
-        <a href="admin_wres.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Walk-in-Borrow</a>
         <a href="admin_preq.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Pending Requests</a>
         <a href="admin_brel.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Borrowed Books</a>
         <a href="admin_ob.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Overdue Books</a>
@@ -228,7 +236,9 @@ th, td {
 
     <div class="content">
         <nav class="secondary-navbar">
-            <a href="admin_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="secondary-navbar-item">Charts</a>
+            <a href="admin_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="secondary-navbar-item">Library User Charts</a>
+            <a href="admin_yr_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="secondary-navbar-item">Year Level Graph</a>
+            <a href="admin_prps_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="secondary-navbar-item">User Purpose Graph</a>
             <a href="admin_win.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="secondary-navbar-item active">Top Library User</a>
             <a href="admin_win2.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="secondary-navbar-item">Top Book Borrrower</a>
         </nav>
@@ -247,7 +257,7 @@ th, td {
             <input type="date" id="fromDate" name="fromDate" value="<?php echo isset($_GET['fromDate']) ? htmlspecialchars($_GET['fromDate']) : ''; ?>" required>
             <label for="toDate">To:</label>
             <input type="date" id="toDate" name="toDate" value="<?php echo isset($_GET['toDate']) ? htmlspecialchars($_GET['toDate']) : ''; ?>" required>
-            <button type="submit">Search</button>
+            <button type="submit"><i class='fas fa-filter'></i> Filter</button>
         </form>
 
         <h1>
@@ -380,7 +390,7 @@ document.querySelectorAll('.portrait').forEach(function(portrait) {
         var toDate = document.getElementById('toDate').value;
 
         var xhr = new XMLHttpRequest();
-        xhr.open('GET', 'get_details.php?info=' + encodeURIComponent(info) + '&fromDate=' + encodeURIComponent(fromDate) + '&toDate=' + encodeURIComponent(toDate), true);
+        xhr.open('GET', '../get_details.php?info=' + encodeURIComponent(info) + '&fromDate=' + encodeURIComponent(fromDate) + '&toDate=' + encodeURIComponent(toDate), true);
         xhr.onload = function() {
             if (xhr.status === 200) {
                 var details = JSON.parse(xhr.responseText);

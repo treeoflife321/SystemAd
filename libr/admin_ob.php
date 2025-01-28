@@ -71,7 +71,6 @@ if(isset($_GET['aid'])) {
         <a href="admin_pf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Profile</a>
         <a href="admin_attd.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Library Logs</a>
         <a href="admin_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Statistics</a>
-        <a href="admin_wres.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Walk-in-Borrow</a>
         <a href="admin_preq.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Pending Requests</a>
         <a href="admin_brel.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Borrowed Books</a>
         <a href="admin_ob.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item active">Overdue Books</a>
@@ -146,7 +145,7 @@ if(isset($_GET['aid'])) {
     </tbody>
 </table>
 
-<div class="search-bar">
+<!-- <div class="search-bar">
             <h1>Walk-In Overdue:</h1>
         </div>
         <table id="walkin-overdue-books-table">
@@ -156,7 +155,7 @@ if(isset($_GET['aid'])) {
             <th>User Info</th>
             <th>Book Title</th>
             <th>Due Date</th>
-            <th>Fines '₱'</th>
+            <th hidden>Fines '₱'</th>
             <th>Settled</th>
             <th style="display: none;">RID</th>
             <th style="display: none;">UID</th>
@@ -181,7 +180,7 @@ if ($result && $result->num_rows > 0) {
         echo "<td>" . $row["info"] . "</td>";
         echo "<td>" . $row["title"] . "</td>";
         echo "<td>" . $row["due_date"] . "</td>";
-        echo "<td class='fines' style='text-align:center;'></td>";
+        echo "<td hidden class='fines' style='text-align:center;'></td>";
         echo "<td style='text-align:center;'><button class='approve-btn' name='checkButton'><i class='fas fa-check'></i></button></td>";
         // Output hidden columns with RID, UID, BID, and Title
         echo "<td style='display: none;' class='rid'>" . $row["rid"] . "</td>";
@@ -197,7 +196,7 @@ if ($result && $result->num_rows > 0) {
 </tbody>
 </table>
 
-    </div>
+    </div> -->
 
 <script>
     // Function to update time
@@ -226,7 +225,7 @@ function calculateFines(tableBodyId) {
 
         if (timeDiff > 0) { // Ensure that fines are only calculated for overdue books
             var overdueDays = Math.ceil(timeDiff / (1000 * 3600 * 24)); // Calculate difference in days
-            var fines = (overdueDays - 1) * 3; // Fines calculation (₱3 per day after the first day)
+            var fines = (overdueDays - 1) * 5; // Fines calculation (₱3 per day after the first day)
             $(this).find('.fines').text(fines); // Update fines in the table
         } else {
             $(this).find('.fines').text(0); // If not overdue, set fines to 0
@@ -262,7 +261,7 @@ function toggleDropdown(event) {
 <script>
 // Function to handle the approve button click for the first table
 function handleApproveButtonClickForTable1() {
-    $('#overdue-books-body-1').on('click', '.approve-btn', function() {
+    $('#overdue-books-body-1').on('click', '.approve-btn', function () {
         var row = $(this).closest('tr'); // Get the row of the clicked button
         var rid = row.find('.rid').text(); // Get the RID
         var uid = row.find('.uid').text(); // Get the UID
@@ -271,58 +270,77 @@ function handleApproveButtonClickForTable1() {
         var info = row.find('td:eq(1)').text(); // Get the User Info
         var title = row.find('td:eq(2)').text(); // Get the Book Title
 
-        // Get the current date
-        var currentDate = new Date();
-        var formattedDate = (currentDate.getMonth() + 1).toString().padStart(2, '0') + '-' +
-                            currentDate.getDate().toString().padStart(2, '0') + '-' +
-                            currentDate.getFullYear().toString();
+        // Prompt user for remarks
+        Swal.fire({
+            title: 'Enter Remarks',
+            input: 'text',
+            inputLabel: 'Remarks:',
+            inputPlaceholder: 'Add any additional information here...',
+            inputAttributes: {
+                style: 'width: 88%; padding: 8px; font-size: 16px; box-sizing: border-box;'
+            },
+            showCancelButton: false,
+            confirmButtonText: 'Submit',
+            cancelButtonText: 'Cancel',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                var remarks = result.value; // Capture the remarks input
 
-        // AJAX request to update the database
-        $.ajax({
-            url: 'update_overdue.php', // PHP file to handle the database operations
-            type: 'POST',
-            data: {
-                rid: rid,
-                uid: uid,
-                bid: bid,
-                info: info,
-                title: title,
-                fines: fines,
-                date_set: formattedDate
-            },
-            success: function(response) {
-                var res = JSON.parse(response);
-                if (res.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success!',
-                        text: 'Overdue book settled and updated successfully.',
-                        confirmButtonText: 'OK'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            row.remove(); // Remove the row from the table
+                // Get the current date
+                var currentDate = new Date();
+                var formattedDate = (currentDate.getMonth() + 1).toString().padStart(2, '0') + '-' +
+                    currentDate.getDate().toString().padStart(2, '0') + '-' +
+                    currentDate.getFullYear().toString();
+
+                // AJAX request to update the database
+                $.ajax({
+                    url: '../update_overdue.php', // PHP file to handle the database operations
+                    type: 'POST',
+                    data: {
+                        rid: rid,
+                        uid: uid,
+                        bid: bid,
+                        info: info,
+                        title: title,
+                        fines: fines,
+                        date_set: formattedDate,
+                        remarks: remarks // Send remarks to the server
+                    },
+                    success: function (response) {
+                        var res = JSON.parse(response);
+                        if (res.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success!',
+                                text: 'Overdue book settled and updated successfully.',
+                                confirmButtonText: 'OK'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    row.remove(); // Remove the row from the table
+                                }
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: res.message || 'An error occurred while updating the database.',
+                                confirmButtonText: 'OK'
+                            });
                         }
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error!',
-                        text: res.message || 'An error occurred while updating the database.',
-                        confirmButtonText: 'OK'
-                    });
-                }
-            },
-            error: function(xhr, status, error) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Success!',
-                    text: 'Overdue book settled and updated successfully.',
-                        confirmButtonText: 'OK'
-}).then((result) => {
-    if (result.isConfirmed) {
-        location.reload(); // Reload the page
-    }
-});
+                    },
+                    error: function (xhr, status, error) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: 'Overdue book settled and updated successfully.',
+                            confirmButtonText: 'OK'
+                        }).then((result) => {
+                                if (result.isConfirmed) {
+                                    row.remove(); // Remove the row from the table
+                                }
+                            });
+                    }
+                });
             }
         });
     });

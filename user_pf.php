@@ -65,6 +65,46 @@ if ($result && $result->num_rows > 0) {
 }
 $stmt->close();
 ?>
+<?php
+// Query to count overdued books for the current user
+$query_overdued_books = "SELECT COUNT(*) AS overdued_count FROM rsv WHERE uid = ? AND status = 'Overdue'";
+$stmt_overdued_books = $mysqli->prepare($query_overdued_books);
+$stmt_overdued_books->bind_param("i", $uid);
+$stmt_overdued_books->execute();
+$result_overdued_books = $stmt_overdued_books->get_result();
+
+// Initialize overdued books count
+$overdued_count = 0;
+
+// Check if the result is not empty
+if ($result_overdued_books && $result_overdued_books->num_rows > 0) {
+    $row_overdued_books = $result_overdued_books->fetch_assoc();
+    $overdued_count = $row_overdued_books['overdued_count'];
+}
+?>
+<?php
+// Query to count available favorite items for the current user
+$query_available_favorites = "SELECT COUNT(*) AS available_favorites_count 
+                               FROM fav 
+                               INNER JOIN inventory ON fav.bid = inventory.bid 
+                               WHERE fav.uid = ? AND inventory.status = 'Available'";
+$stmt_available_favorites = $mysqli->prepare($query_available_favorites);
+$stmt_available_favorites->bind_param("i", $uid);
+$stmt_available_favorites->execute();
+$result_available_favorites = $stmt_available_favorites->get_result();
+
+// Initialize available favorites count
+$available_favorites_count = 0;
+
+// Check if the result is not empty
+if ($result_available_favorites && $result_available_favorites->num_rows > 0) {
+    $row_available_favorites = $result_available_favorites->fetch_assoc();
+    $available_favorites_count = $row_available_favorites['available_favorites_count'];
+}
+
+// Close the statement
+$stmt_available_favorites->close();
+?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -94,8 +134,22 @@ $stmt->close();
         <div class="hell">Hello, <?php echo $user_username_display; ?>!</div>
         <a href="user_dash.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>" class="sidebar-item">Dashboard</a>
         <a href="user_rsrv.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>" class="sidebar-item">Reserve/Borrow</a>
-        <a href="user_ovrd.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>" class="sidebar-item">Overdue</a>
-        <a href="user_fav.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>" class="sidebar-item">Favorites</a>
+        <a href="user_ovrd.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>" class="sidebar-item" style="position: relative;">
+    Overdue
+    <?php if ($overdued_count > 0): ?>
+        <span style="position: absolute; top: 10%; right: 5%; background-color: red; color: white; border-radius: 50%; padding: 0.2em 0.6em; font-size: 0.8em;">
+            <?php echo $overdued_count; ?>
+        </span>
+    <?php endif; ?>
+</a>
+<a href="user_fav.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>" class="sidebar-item" style="position: relative;">
+    Favorites
+    <?php if ($available_favorites_count > 0): ?>
+        <span style="position: absolute; top: 10%; right: 5%; background-color: red; color: white; border-radius: 50%; padding: 0.2em 0.6em; font-size: 0.8em;">
+            <?php echo $available_favorites_count; ?>
+        </span>
+    <?php endif; ?>
+</a>
         <a href="user_sebk.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>" class="sidebar-item">E-Books</a>
         <a href="login.php" class="logout-btn">Logout</a>
     </div>
@@ -117,48 +171,54 @@ $stmt->close();
             <div class="form-container">
                 <form action="" method="POST" enctype="multipart/form-data" onsubmit="return validateForm();">
                     <h1 style="text-align: center;">Edit Profile</h1>
-                    <label for="qr-info"></label>
-                    <input type="text" id="qr-info" name="qr-info" placeholder="QR Info" value="<?php echo htmlspecialchars($user['info']); ?>" required><br>
+                    <label for="qr-info">QR Info:</label>
+                    <input type="text" id="qr-info" name="qr-info" placeholder="INPUT NAME COURSE(e.g. JOHN DOE BSIT)" value="<?php echo htmlspecialchars($user['info']); ?>" required><br>
 
-                    <label for="idnum"></label>
+                    <label for="idnum">ID Number:</label>
                     <input type="text" id="idnum" name="idnum" placeholder="ID Number" value="<?php echo htmlspecialchars($user['idnum']); ?>" required><br>
                     
                     <label for="year_level">Year Level:</label>
-                    <input type="text" id="year_level" name="year_level" placeholder="Year Level" value="<?php echo htmlspecialchars($user['year_level']); ?>" required><br>
+                    <select id="year_level" name="year_level" style="width: 97%;" required>
+                        <option value="">Select Year Level</option>
+                        <option value="1st Year" <?php if ($user['year_level'] == '1st Year') echo 'selected'; ?>>1st Year</option>
+                        <option value="2nd Year" <?php if ($user['year_level'] == '2nd Year') echo 'selected'; ?>>2nd Year</option>
+                        <option value="3rd Year" <?php if ($user['year_level'] == '3rd Year') echo 'selected'; ?>>3rd Year</option>
+                        <option value="4th Year" <?php if ($user['year_level'] == '4th Year') echo 'selected'; ?>>4th Year</option>
+                        <option value="5th Year" <?php if ($user['year_level'] == '5th Year') echo 'selected'; ?>>5th Year</option>
+                    </select><br>
 
-                    <label for="contact"></label>
+                    <label for="contact">Contact Number:</label>
                     <input type="text" id="contact" name="contact" placeholder="Contact Number" value="<?php echo htmlspecialchars($user['contact']); ?>" required><br>
 
                     <label for="birthdate">Birthdate:</label>
                     <input type="date" id="birthdate" name="birthdate" value="<?php echo htmlspecialchars($user['birthdate']); ?>" required><br>
 
                     <label for="gender">Gender:</label>
-                    <select id="gender" name="gender" required>
+                    <select id="gender" style="width:97%;" name="gender" required>
                         <option value="">Choose Gender</option>
                         <option value="Male" <?php if ($user['gender'] == 'Male') echo 'selected'; ?>>Male</option>
                         <option value="Female" <?php if ($user['gender'] == 'Female') echo 'selected'; ?>>Female</option>
                         <option value="Non-Binary" <?php if ($user['gender'] == 'Non-Binary') echo 'selected'; ?>>Non-Binary</option>
-                    </select><br><br>
+                    </select><br>
 
-                    <label for="username"></label>
+                    <label for="username">Username:</label>
                     <input type="text" id="username" name="username" placeholder="Username" value="<?php echo htmlspecialchars($user['username']); ?>" required><br>
 
-                    <label for="password"></label>
+                    <label for="password">Password:</label>
                     <input type="password" id="password" name="password" placeholder="New Password"><br>
 
-                    <label for="repeat_password"></label>
+                    <label for="repeat_password">Repeat Password</label>
                     <input type="password" id="repeat_password" name="repeat_password" placeholder="Repeat Password">
 
-                    <label for="user_type"></label>
-                    <center>
-                    <select id="user_type" name="user_type">
+                    <label for="user_type">User Type:</label>
+                    
+                    <select id="user_type" style="width:97%;" name="user_type">
                         <option value="">Choose User Type</option>
                         <option value="Student" <?php if ($user['user_type'] == 'Student') echo 'selected'; ?>>Student</option>
                         <option value="Faculty" <?php if ($user['user_type'] == 'Faculty') echo 'selected'; ?>>Faculty</option>
                         <option value="Staff" <?php if ($user['user_type'] == 'Staff') echo 'selected'; ?>>Staff</option>
                     </select><br>
-                    </center>
-
+                    
                     <label for="profile_image">Profile Image (Optional)</label>
                     <input type="file" id="profile_image" name="profile_image" accept="image/*" onchange="previewImage(event)"><br>
                     <center>
@@ -167,10 +227,10 @@ $stmt->close();
                     <br>
 
                     <div class="button-container">
-                        <!-- Save button -->
-                        <button style="width: 100px; background-color:green;" type="submit">Save</button>
                         <!-- Cancel button -->
                         <a href="user_dash.php<?php if(isset($uid)) echo '?uid=' . $uid; ?>"><button style="width: 100px; background-color:red;" type="button">Cancel</button></a>
+                        <!-- Save button -->
+                        <button style="width: 100px; background-color:green;" type="submit">Save</button>
                     </div>
                 </form>
                 <br>
@@ -198,62 +258,86 @@ $stmt->close();
         }
 
         function openQRScanner() {
-            Swal.fire({
-                title: 'Scan QR Code',
-                showCancelButton: true,
-                cancelButtonText: 'Cancel',
-                showConfirmButton: false,
-                allowOutsideClick: false,
-                allowEscapeKey: false,
-                html: '<video id="qr-video" width="100%" style="max-width: 400px;"></video>',
-                didOpen: () => {
-                    let scanner = new Instascan.Scanner({ video: document.getElementById('qr-video') });
+    let scanner;
+    let currentCameraIndex = 0;
+    let cameras = [];
 
-                    const handleScan = function (content) {
-                        // Handle the scanned result as needed
-                        handleScannedResult(content);
-                        scanner.removeListener('scan', handleScan); // Remove the event listener
-                    };
+    Swal.fire({
+        title: 'Scan QR Code',
+        showCancelButton: true,
+        cancelButtonText: 'Cancel',
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        html: `
+            <video id="qr-video" width="100%" style="max-width: 400px;"></video>
+            <button id="switch-camera-btn" class="btn btn-primary" style="margin-top: 10px;">Switch Camera</button>
+        `,
+        didOpen: () => {
+            scanner = new Instascan.Scanner({ video: document.getElementById('qr-video') });
 
-                    scanner.addListener('scan', handleScan);
+            const handleScan = function (content) {
+                handleScannedResult(content);
+                scanner.removeListener('scan', handleScan);
+            };
 
-                    Instascan.Camera.getCameras().then(function (cameras) {
-                        if (cameras.length > 0) {
-                            // Start the scanner with the first available camera
-                            scanner.start(cameras[0]);
-                        } else {
-                            console.error('No cameras found.');
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'No Cameras Found',
-                                text: 'No cameras are available for scanning.',
-                            });
-                        }
-                    }).catch(function (e) {
-                        console.error(e);
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Camera Error',
-                            text: 'An error occurred while accessing the camera.',
-                        });
+            scanner.addListener('scan', handleScan);
+
+            Instascan.Camera.getCameras().then(function (availableCameras) {
+                cameras = availableCameras;
+                if (cameras.length > 0) {
+                    scanner.start(cameras[currentCameraIndex]);
+                } else {
+                    console.error('No cameras found.');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'No Cameras Found',
+                        text: 'No cameras are available for scanning.',
                     });
-                },
-                willClose: () => {
-                    // Stop the scanner when the Swal closes
-                    let scanner = new Instascan.Scanner({ video: document.getElementById('qr-video') });
-                    scanner.stop();
-                },
+                }
+            }).catch(function (e) {
+                console.error(e);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Camera Error',
+                    text: 'An error occurred while accessing the camera.',
+                });
             });
-        }
 
-        function handleScannedResult(content) {
-            // Do something with the scanned content
-            Swal.fire({
-                icon: 'success',
-                title: 'QR Code Scanned',
-                text: 'Scanned content: ' + content,
+            document.getElementById('switch-camera-btn').addEventListener('click', () => {
+                if (cameras.length > 1) {
+                    currentCameraIndex = (currentCameraIndex + 1) % cameras.length;
+                    scanner.stop().then(() => {
+                        scanner.start(cameras[currentCameraIndex]);
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Single Camera',
+                        text: 'No other cameras to switch to.',
+                    });
+                }
             });
-        }
+        },
+        willClose: () => {
+            if (scanner) {
+                scanner.stop();
+            }
+        },
+    });
+}
+
+function handleScannedResult(content) {
+    // Update the value of the input field with the scanned content
+    document.getElementById('qr-info').value = content;
+
+    // Show success alert with the scanned content
+    Swal.fire({
+        icon: 'success',
+        title: 'QR Code Scanned',
+        text: 'Scanned content: ' + content,
+    });
+}
 
         function previewImage(event) {
             var reader = new FileReader();

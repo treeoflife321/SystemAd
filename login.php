@@ -4,6 +4,7 @@ include 'config.php';
 
 // Initialize alert message
 $alertMessage = '';
+$redirectUrl = '';
 
 // Check if form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -27,11 +28,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($user['password'] === $password) {
             $alertMessage = "Login successful. Welcome, " . $user['username'] . "!";
             $redirectUrl = 'admin_dash.php?aid=' . $user['aid'];
-            echo "<script>
-                    setTimeout(function() {
-                        window.location.href = '$redirectUrl';
-                    }, 2000);
-                </script>";
         } else {
             $alertMessage = "Incorrect password.";
         }
@@ -48,11 +44,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if ($user['password'] === $password) {
                 $alertMessage = "Login successful. Welcome, " . $user['username'] . "!";
                 $redirectUrl = 'libr/admin_dash.php?aid=' . $user['aid'];
-                echo "<script>
-                        setTimeout(function() {
-                            window.location.href = '$redirectUrl';
-                        }, 2000);
-                    </script>";
             } else {
                 $alertMessage = "Incorrect password.";
             }
@@ -73,12 +64,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         $alertMessage = "Account is still pending for activation.";
                     } elseif ($user['status'] === 'Active') {
                         $alertMessage = "Login successful. Welcome, " . $user['username'] . "!";
-                        // Redirect to user_dash.php after displaying alert
-                        echo "<script>
-                                setTimeout(function() {
-                                    window.location.href = 'user_dash.php?uid=" . $user['uid'] . "';
-                                }, 2000);
-                            </script>";
+                        $redirectUrl = 'user_dash.php?uid=' . $user['uid'];
                     } elseif ($user['status'] === 'Disabled') {
                         $alertMessage = "Account is disabled.";
                     }
@@ -116,7 +102,7 @@ $mysqli->close();
         <div class="navbar-container">
         <a href="index.php"><img src="css/pics/download.png" alt="Logo" class="logo" style="width:50px; height:50px;"></a>
             <ul class="nav-links">
-                <li><a href="#">About Us</a></li>
+                <li><a href="about_us.html">About Us</a></li>
             </ul>
         </div>
     </nav>
@@ -128,10 +114,14 @@ $mysqli->close();
         <?php if (!empty($alertMessage)) : ?>
             <script>
                 Swal.fire({
-                    icon: 'info',
+                    icon: '<?php echo $redirectUrl ? "success" : "error"; ?>',
                     title: '<?php echo $alertMessage; ?>',
                     showConfirmButton: false,
                     timer: 2000
+                }).then(() => {
+                    <?php if ($redirectUrl) : ?>
+                        window.location.href = '<?php echo $redirectUrl; ?>';
+                    <?php endif; ?>
                 });
             </script>
         <?php endif; ?>

@@ -77,6 +77,7 @@ if(isset($_POST['id']) && isset($_POST['action'])) {
 // Initialize search parameters
 $search = isset($_GET['search']) ? $_GET['search'] : '';
 $user_type = isset($_GET['user_type']) ? $_GET['user_type'] : '';
+$course = isset($_GET['course']) ? $_GET['course'] : '';
 $start_date = isset($_GET['start_date']) ? $_GET['start_date'] : '';
 $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : '';
 $purpose = isset($_GET['purpose']) ? $_GET['purpose'] : '';
@@ -90,6 +91,9 @@ $query = "SELECT * FROM chkin WHERE archived = 'Yes'";
 // Add conditions to the query based on search parameters
 if(!empty($search)) {
     $query .= " AND info LIKE '%" . $mysqli->real_escape_string($search) . "%'";
+}
+if(!empty($course)) {
+    $query .= " AND info LIKE '%" . $mysqli->real_escape_string($course) . "%'";
 }
 if(!empty($user_type)) {
     $query .= " AND user_type = '" . $mysqli->real_escape_string($user_type) . "'";
@@ -148,11 +152,10 @@ if ($result === false) {
         }
         ?>
         <a href="admin_dash.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Dashboard</a>
-        <a href="admin_pf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Profile</a>
+        <a href="admin_pf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Credentials</a>
         <a href="admin_srch.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Accounts</a>
         <a href="admin_attd.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item active">Library Logs</a>
         <a href="admin_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Statistics</a>
-        <a href="admin_wres.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Walk-in-Borrow</a>
         <a href="admin_preq.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Pending Requests</a>
         <a href="admin_brel.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Borrowed Books</a>
         <a href="admin_ob.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Overdue Books</a>
@@ -170,6 +173,7 @@ if ($result === false) {
         <nav class="secondary-navbar">
             <a href="admin_attd.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="secondary-navbar-item">Attendance</a>
             <a href="liblogs.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="secondary-navbar-item">User Logs</a>
+            <a href="admin_accred.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="secondary-navbar-item">User Monitoring</a>
             <a href="admin_aliblogs.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="secondary-navbar-item active">Archived User Logs</a>
         </nav>
     </div>
@@ -195,6 +199,14 @@ if ($result === false) {
                         <option value="Visitor" <?php if($user_type == "Visitor") echo "selected"; ?>>Visitor</option>
                         <option value="Staff" <?php if($user_type == "Staff") echo "selected"; ?>>Staff</option>
                     </select>
+                    <select name="course">
+                        <option value="" <?php if(empty($course)) echo "selected"; ?>>Course:</option>
+                        <option value="BSESM" <?php if($course == "BSESM") echo "selected"; ?>>BSESM</option>
+                        <option value="BSIT" <?php if($course == "BSIT") echo "selected"; ?>>BSIT</option>
+                        <option value="BSMET" <?php if($course == "BSMET") echo "selected"; ?>>BSMET</option>
+                        <option value="BSNAME" <?php if($course == "BSNAME") echo "selected"; ?>>BSNAME</option>
+                        <option value="BSTCM" <?php if($course == "BSTCM") echo "selected"; ?>>BSTCM</option>
+                    </select>
                     <select name="year_level">
                         <option value="" <?php if(empty($year_level)) echo "selected"; ?>>Year Level:</option>
                         <option value="1st Year" <?php if($year_level == "1st Year") echo "selected"; ?>>1st Year</option>
@@ -210,7 +222,6 @@ if ($result === false) {
                         <option value="Female" <?php if($gender == "Female") echo "selected"; ?>>Female</option>
                         <option value="Non-Binary" <?php if($gender == "Non-Binary") echo "selected"; ?>>Non-Binary</option>
                     </select>
-                    <br>
                     <label for="start-date" style="color: black;">From:</label>
                     <input type="date" id="start-date" name="start_date" value="<?php echo $start_date; ?>">
                     <label for="end-date" style="color: black;">To:</label>
@@ -223,7 +234,7 @@ if ($result === false) {
                     </select>
                     <?php if(isset($aid)) echo '<input type="hidden" name="aid" value="'.$aid.'">'; ?>
                     <button type="submit"><i class="fas fa-search"></i> Search</button>
-                    <button type="button" onclick="clearForm()">Clear</button>
+                    <button type="button" onclick="clearForm()"><i class="fa-regular fa-circle-xmark"></i> Clear</button>
                 </div>
             </form>
     </div>

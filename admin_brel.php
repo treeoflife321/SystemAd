@@ -86,11 +86,10 @@ function displayReservationCancellationAlert($alertMessage) {
         }
         ?>
         <a href="admin_dash.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Dashboard</a>
-        <a href="admin_pf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Profile</a>
+        <a href="admin_pf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Credentials</a>
         <a href="admin_srch.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Accounts</a>
         <a href="admin_attd.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Library Logs</a>
         <a href="admin_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Statistics</a>
-        <a href="admin_wres.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Walk-in-Borrow</a>
         <a href="admin_preq.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Pending Requests</a>
         <a href="admin_brel.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item active">Borrowed Books</a>
         <a href="admin_ob.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Overdue Books</a>
@@ -119,6 +118,7 @@ function displayReservationCancellationAlert($alertMessage) {
     <br>
     <div class="content-container">
     <div class="search-bar">
+        <h2>Books in Reservation</h2>
     </div>
     <form id="bookReleaseForm" method="post" action="">
     <input type="hidden" name="aid" value="<?php echo isset($aid) ? $aid : ''; ?>">
@@ -136,7 +136,7 @@ function displayReservationCancellationAlert($alertMessage) {
             <tbody>
                 <?php
                 // Query to fetch joined data from users and rsv tables with status "Reserved"
-                $query = "SELECT u.info, u.contact, r.title, r.rsv_end, r.rid FROM users u JOIN rsv r ON u.uid = r.uid WHERE r.status = 'Reserved'";
+                $query = "SELECT u.info, u.contact, r.title, r.rsv_end, r.rid, r.bid FROM users u JOIN rsv r ON u.uid = r.uid WHERE r.status = 'Reserved'";
                 $result = $mysqli->query($query);
 
                 if ($result && $result->num_rows > 0) {
@@ -152,6 +152,7 @@ function displayReservationCancellationAlert($alertMessage) {
                         // Add a hidden input field to store the reservation ID
                         echo "<td style='text-align: center;'>
                                 <input type='hidden' name='reservation_id' value='" . $row["rid"] . "'>
+                                <input type='hidden' name='book_id' value='" . $row["bid"] . "'>
                                 <button type='button' class='approve-btn' onclick='submitForm(" . $row["rid"] . ")'><i class='fas fa-check'></i></button>
                               </td>"; // Check icon from FontAwesome
                         echo "</tr>";
@@ -246,9 +247,9 @@ $stmt->close();
 ?>
 </script>
 <?php
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['reservation_id'])) {
-    // Retrieve reservation ID from the form
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $reservation_id = $_POST['reservation_id'];
+    $book_id = $_POST['book_id'];
 
     // Calculate the current date and the due date (current date + 7 days)
     $current_date = date("m-d-Y");
@@ -260,6 +261,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['reservation_id'])) {
     $stmt->bind_param("ssi", $current_date, $due_date, $reservation_id);
     $stmt->execute();
     $stmt->close();
+
+    // Update the inventory status to "Borrowed"
+    $updateInvQuery = "UPDATE inventory SET status = 'Borrowed' WHERE bid = ?";
+    $stmt = $mysqli->prepare($updateInvQuery);
+    $stmt->bind_param("i", $book_id);
+    $stmt->execute();
 
     // Redirect to admin_brel.php with aid parameter
     $redirect_url = "admin_brel.php";

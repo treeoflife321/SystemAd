@@ -5,25 +5,34 @@ include 'config.php';
 // Check if 'aid' parameter is present in the URL
 if(isset($_GET['aid'])) {
     $aid = $_GET['aid'];
-    // Query to fetch the username corresponding to the aid
-    $query = "SELECT username FROM admin WHERE aid = ?";
-    $stmt = $mysqli->prepare($query);
-    $stmt->bind_param("i", $aid);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    // Check if the result is not empty
-    if ($result && $result->num_rows > 0) {
-        $admin = $result->fetch_assoc();
-        $admin_username = $admin['username'];
-        // Display the admin username in the sidebar
-        $admin_username_display = $admin_username;
-    } else {
-        // Display a default message if admin username is not found
-        $admin_username_display = "Username";
-    }
-    // Close statement
-    $stmt->close();
+// Fetch the 'name' column along with 'username'
+$query = "SELECT username, name FROM admin WHERE aid = ?";
+$stmt = $mysqli->prepare($query);
+if ($stmt === false) {
+    die("Error in preparing statement: " . $mysqli->error);
+}
+
+// Bind parameters and execute
+$stmt->bind_param("i", $aid);
+if (!$stmt->execute()) {
+    die("Error in executing statement: " . $stmt->error);
+}
+
+// Get result
+$result = $stmt->get_result();
+
+// Check if the result is not empty
+if ($result && $result->num_rows > 0) {
+    $admin = $result->fetch_assoc();
+    $admin_username_display = $admin['username'];
+    $admin_name_display = $admin['name']; // Fetch the 'name' column
+} else {
+    $admin_username_display = "Username";
+    $admin_name_display = "Name";
+}
+
+// Close statement
+$stmt->close();
 }
 
 // Check if a reservation needs to be deleted
@@ -42,6 +51,68 @@ if (isset($_POST['delete_reservation'])) {
     header("Location: admin_ol.php" . (isset($aid) ? '?aid=' . $aid : ''));
     exit();
 }
+?>
+<?php
+// Include database connection
+include 'config.php';
+
+// Initialize variables for search parameters
+$searchInfo = isset($_GET['searchInfo']) ? $_GET['searchInfo'] : '';
+$searchTitle = isset($_GET['searchTitle']) ? $_GET['searchTitle'] : '';
+$startDate = isset($_GET['startDate']) ? $_GET['startDate'] : '';
+$endDate = isset($_GET['endDate']) ? $_GET['endDate'] : '';
+
+// Build the base query
+$query = "SELECT ovrd.oid, ovrd.uid, ovrd.bid, ovrd.title, ovrd.fines, ovrd.date_set, ovrd.info, 
+          users.info AS student_info, inventory.title AS book_title, rsv.due_date, ovrd.remarks
+          FROM ovrd
+          LEFT JOIN users ON ovrd.uid = users.uid
+          LEFT JOIN inventory ON ovrd.bid = inventory.bid
+          LEFT JOIN rsv ON ovrd.rid = rsv.rid
+          WHERE 1=1";
+
+// Append conditions based on search parameters
+if (!empty($searchInfo)) {
+    $query .= " AND (users.info LIKE ? OR ovrd.info LIKE ?)";
+}
+if (!empty($searchTitle)) {
+    $query .= " AND inventory.title LIKE ?";
+}
+if (!empty($startDate)) {
+    // Convert the startDate to Y-m-d format for comparison
+    $query .= " AND STR_TO_DATE(rsv.due_date, '%m-%d-%Y') >= STR_TO_DATE(?, '%Y-%m-%d')";
+}
+if (!empty($endDate)) {
+    $query .= " AND ovrd.date_set <= ?";
+}
+
+$stmt = $mysqli->prepare($query);
+
+// Bind parameters dynamically
+$params = [];
+if (!empty($searchInfo)) {
+    $searchInfoWildcard = '%' . $searchInfo . '%';
+    $params[] = $searchInfoWildcard;
+    $params[] = $searchInfoWildcard;
+}
+if (!empty($searchTitle)) {
+    $searchTitleWildcard = '%' . $searchTitle . '%';
+    $params[] = $searchTitleWildcard;
+}
+if (!empty($startDate)) {
+    $params[] = $startDate;
+}
+if (!empty($endDate)) {
+    $params[] = $endDate;
+}
+
+// Bind parameters to the prepared statement
+if (!empty($params)) {
+    $stmt->bind_param(str_repeat('s', count($params)), ...$params);
+}
+
+$stmt->execute();
+$result = $stmt->get_result();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -68,11 +139,10 @@ if (isset($_POST['delete_reservation'])) {
         }
         ?>
         <a href="admin_dash.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Dashboard</a>
-        <a href="admin_pf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Profile</a>
+        <a href="admin_pf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Credentials</a>
         <a href="admin_srch.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Accounts</a>
         <a href="admin_attd.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Library Logs</a>
         <a href="admin_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Statistics</a>
-        <a href="admin_wres.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Walk-in-Borrow</a>
         <a href="admin_preq.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Pending Requests</a>
         <a href="admin_brel.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Borrowed Books</a>
         <a href="admin_ob.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item active">Overdue Books</a>
@@ -100,16 +170,20 @@ if (isset($_POST['delete_reservation'])) {
     </div>
 
     <div class="content-container">
-    <div class="search-bar">
-        <input type="text" id="searchInfo" placeholder="Search user info">
-        <input type="text" id="searchTitle" placeholder="Search book title">
-        <label for="start-date">From:</label>
-            <input type="date" id="startDate" name="start_date" placeholder="Start Date">
-        <label for="end-date">To:</label>
-            <input type="date" id="endDate" name="end_date" placeholder="End Date">
-        <button type="button" onclick="searchTable()">Search</button>
-    </div>
-    
+        <div class="search-bar">
+        <h2>Overdue Books Log</h2>
+        <form method="get" action="admin_ol.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>">
+            <input type="text" name="searchInfo" value="<?php echo htmlspecialchars($searchInfo); ?>" placeholder="Search user info">
+            <input type="text" name="searchTitle" value="<?php echo htmlspecialchars($searchTitle); ?>" placeholder="Search book title">
+            <label for="start-date">From:</label>
+            <input type="date" name="startDate" value="<?php echo htmlspecialchars($startDate); ?>">
+            <label for="end-date">To:</label>
+            <input type="date" name="endDate" value="<?php echo htmlspecialchars($endDate); ?>">
+            <?php if(isset($aid)) echo '<input type="hidden" name="aid" value="'.$aid.'">'; ?>
+            <button type="submit"><i class='fas fa-search'></i> Search</button>
+        </form>
+        </div>
+
     <table id="dataTable">
     <thead>
         <tr>
@@ -119,53 +193,44 @@ if (isset($_POST['delete_reservation'])) {
             <th>Due Date</th>
             <th>Fines</th>
             <th>Date Settled</th>
+            <th>Remarks</th>
             <th style="display: none;">OID</th>
-            <th>Actions:</th>
+            <th hidden>Actions:</th>
         </tr>
     </thead>
     <tbody>
-        <?php
-        // Query to fetch data from ovrd table
-        $query = "SELECT ovrd.oid, ovrd.uid, ovrd.bid, ovrd.title, ovrd.fines, ovrd.date_set, ovrd.info, users.info AS student_info, inventory.title AS book_title, rsv.due_date FROM ovrd
-        LEFT JOIN users ON ovrd.uid = users.uid
-        LEFT JOIN inventory ON ovrd.bid = inventory.bid
-        LEFT JOIN rsv ON ovrd.rid = rsv.rid";
-
-        $result = $mysqli->query($query);
-        
-        if ($result && $result->num_rows > 0) {
-            $counter = 1;
-            // Output data of each row
-            while ($row = $result->fetch_assoc()) {
-                echo "<tr>";
-                echo "<td>" . $counter++ . "</td>"; // Counter
-                // Output student info based on uid
-                if ($row["uid"] == 0) {
-                    echo "<td>" . $row["info"] . "</td>"; // Student Info
-                } else {
-                    echo "<td>" . $row["student_info"] . "</td>"; // Student Info
-                }
-                echo "<td>" . $row["book_title"] . "</td>"; // Book Title
-                echo "<td>" . $row["due_date"] . "</td>"; // Due Date
-                echo "<td>" . $row["fines"] . "</td>"; // Fines
-                echo "<td>" . date('m-d-Y', strtotime($row["date_set"])) . "</td>"; // Date Settled
-                echo "<td style='display: none;'>" . $row["oid"] . "</td>"; // OID (hidden)
-                // Add delete buttons
-                echo "<td style='text-align: center;'>
-                    <form id='delete_form_" . $row["oid"] . "' name='delete_form_" . $row["oid"] . "' method='post'>
-                        <input type='hidden' name='delete_reservation' value='true'>
-                            <input type='hidden' name='reservation_id' value='" . $row["oid"] . "'>
-                            <button type='button' class='delete-btn' onclick='deleteReservation(" . $row["oid"] . ")'><i class='fas fa-trash-alt'></i></button>
-                    </form>
-                    </td>";   
-                echo "</tr>";
-            }
-        } else {
-            echo "<tr><td colspan='7'>No records found.</td></tr>";
+    <?php
+    if ($result && $result->num_rows > 0) {
+        $counter = 1;
+        while ($row = $result->fetch_assoc()) {
+            echo "<tr>";
+            echo "<td>" . $counter++ . "</td>"; // Counter
+            echo "<td>" . ($row["uid"] == 0 ? $row["info"] : $row["student_info"]) . "</td>"; // Student Info
+            echo "<td>" . $row["book_title"] . "</td>"; // Book Title
+            echo "<td>" . $row["due_date"] . "</td>"; // Due Date
+            echo "<td>" . $row["fines"] . "</td>"; // Fines
+            echo "<td>" . date('m-d-Y', strtotime($row["date_set"])) . "</td>"; // Date Settled
+            echo "<td>" . $row["remarks"] . "</td>"; // Remarks
+            echo "<td style='display: none;'>" . $row["oid"] . "</td>"; // OID (hidden)
+            echo "<td hidden style='text-align: center;'>
+                <form id='delete_form_" . $row["oid"] . "' name='delete_form_" . $row["oid"] . "' method='post'>
+                    <input type='hidden' name='delete_reservation' value='true'>
+                    <input type='hidden' name='reservation_id' value='" . $row["oid"] . "'>
+                    <button type='button' class='delete-btn' onclick='deleteReservation(" . $row["oid"] . ")'>
+                        <i class='fas fa-trash-alt'></i>
+                    </button>
+                </form>
+                </td>";
+            echo "</tr>";
         }
-        ?>
-    </tbody>
+    } else {
+        echo "<tr><td colspan='7'>No records found.</td></tr>";
+    }
+    ?>
+</tbody>
 </table>
+<br>
+<button class="print-button" onclick="printData()"><i class='fas fa-print'></i> Print Data</button>
 </div>
 <script>
 // Function to handle reservation deletion
@@ -186,68 +251,70 @@ function deleteReservation(oid) {
         }
     });
 }
-
+</script>
+<script>
 // Function to filter the table based on search inputs
 function searchTable() {
-    // Get the values from the input fields
     var searchInfo = document.getElementById('searchInfo').value.toLowerCase();
     var searchTitle = document.getElementById('searchTitle').value.toLowerCase();
     var startDate = document.getElementById('startDate').value;
     var endDate = document.getElementById('endDate').value;
 
-    // Get the table rows
     var table = document.getElementById('dataTable');
     var rows = table.getElementsByTagName('tr');
 
-    // Loop through the table rows
     for (var i = 1; i < rows.length; i++) {
         var cells = rows[i].getElementsByTagName('td');
         var showRow = true;
 
-        // Check student info
         var studentInfo = cells[1].textContent.toLowerCase();
         if (searchInfo && studentInfo.indexOf(searchInfo) === -1) {
             showRow = false;
         }
 
-        // Check book title
         var bookTitle = cells[2].textContent.toLowerCase();
         if (searchTitle && bookTitle.indexOf(searchTitle) === -1) {
             showRow = false;
         }
 
-        // Check due date
         var dueDate = cells[3].textContent;
         if (startDate && !compareDates(dueDate, startDate, 'start')) {
             showRow = false;
         }
 
-        // Check date settled
         var dateSettled = cells[5].textContent;
         if (endDate && !compareDates(dateSettled, endDate, 'end')) {
             showRow = false;
         }
 
-        // Show or hide the row
-        if (showRow) {
-            rows[i].style.display = '';
-        } else {
-            rows[i].style.display = 'none';
-        }
+        rows[i].style.display = showRow ? '' : 'none';
     }
-}
 
-// Helper function to convert date format and compare
+    // Update the print button URL with search parameters
+    var printButton = document.querySelector('.print-button');
+    var printUrl = 'print_ovdtable.php<?php if (isset($aid)) echo "?aid=" . $aid; ?>';
+    var params = [];
+
+    if (searchInfo) params.push('searchInfo=' + encodeURIComponent(searchInfo));
+    if (searchTitle) params.push('searchTitle=' + encodeURIComponent(searchTitle));
+    if (startDate) params.push('startDate=' + encodeURIComponent(startDate));
+    if (endDate) params.push('endDate=' + encodeURIComponent(endDate));
+
+    if (params.length > 0) {
+        printUrl += (printUrl.includes('?') ? '&' : '?') + params.join('&');
+    }
+
+    printButton.addEventListener('click', function () {
+        window.open(printUrl, '_blank');
+    });
+}
+// Helper function to compare dates
 function compareDates(dateStr, compareDateStr, compareType) {
-    // Convert dateStr (mm-dd-yyyy) to yyyy-mm-dd
     var parts = dateStr.split('-');
     var formattedDateStr = parts[2] + '-' + parts[0] + '-' + parts[1];
-
-    // Create Date objects for comparison
     var date = new Date(formattedDateStr);
     var compareDate = new Date(compareDateStr);
 
-    // Compare dates
     if (compareType === 'start') {
         return date >= compareDate;
     } else if (compareType === 'end') {
@@ -256,6 +323,30 @@ function compareDates(dateStr, compareDateStr, compareType) {
     return false;
 }
 </script>
+<script>
+function printData() {
+    var searchInfo = document.querySelector('input[name="searchInfo"]').value;
+    var searchTitle = document.querySelector('input[name="searchTitle"]').value;
+    var startDate = document.querySelector('input[name="startDate"]').value;
+    var endDate = document.querySelector('input[name="endDate"]').value;
+
+    var printUrl = 'print_ovdtable.php';
+    var params = [];
+
+    if (searchInfo) params.push('searchInfo=' + encodeURIComponent(searchInfo));
+    if (searchTitle) params.push('searchTitle=' + encodeURIComponent(searchTitle));
+    if (startDate) params.push('startDate=' + encodeURIComponent(startDate));
+    if (endDate) params.push('endDate=' + encodeURIComponent(endDate));
+    <?php if (isset($admin_name_display)) echo "params.push('name=' + encodeURIComponent('" . $admin_name_display . "'));"; ?>
+
+    if (params.length > 0) {
+        printUrl += '?' + params.join('&');
+    }
+
+    // Open a new window with the print page
+    window.open(printUrl, '_blank');
+}
+    </script>
 <script>
 // Function to format date to mm-dd-yyyy
 function formatDateString(dateStr) {

@@ -15,7 +15,7 @@
             <h1 style="text-align: center;">Register</h1>
             <form action="" method="POST" enctype="multipart/form-data">
                 <label for="qr-info"></label>
-                <input type="text" id="qr-info" name="qr-info" placeholder="QR Info" required><br>
+                <input type="text" id="qr-info" name="qr-info" placeholder="QR Info OR INPUT NAME COURSE(e.g. BSIT)" required><br>
 
                 <label for="idnum"></label>
                 <input type="text" id="idnum" name="idnum" placeholder="ID Number" required><br>

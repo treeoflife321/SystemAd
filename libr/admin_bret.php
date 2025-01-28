@@ -41,23 +41,21 @@ if(isset($_GET['aid'])) {
 }
 
 // Handle check button click event
-if(isset($_POST['checkButton'])) {
-    // Check if reservation ID is set
-    if(isset($_POST['reservation_id'])) {
+if (isset($_POST['checkButton'])) {
+    if (isset($_POST['reservation_id']) && isset($_POST['remarks'])) {
         $reservation_id = $_POST['reservation_id'];
+        $remarks = $_POST['remarks'];
         
         // Insert current date into date_ret column
         $currentDate = date("m-d-Y");
         $status = "Returned"; // Set status to "Returned"
 
-        $updateQuery = "UPDATE rsv SET date_ret = ?, status = ? WHERE rid = ? AND status = 'Released'";
+        $updateQuery = "UPDATE rsv SET date_ret = ?, status = ?, remarks = ? WHERE rid = ? AND status = 'Released'";
         $stmt = $mysqli->prepare($updateQuery);
-        $stmt->bind_param("ssi", $currentDate, $status, $reservation_id);
+        $stmt->bind_param("sssi", $currentDate, $status, $remarks, $reservation_id);
         $stmt->execute();
-        
-        // Check if any records were updated
+
         if ($stmt->affected_rows > 0) {
-            // Records updated successfully
             $successMessage = "Records updated successfully!";
             
             // Update status in inventory table to "Available"
@@ -65,17 +63,9 @@ if(isset($_POST['checkButton'])) {
             $stmtInventory = $mysqli->prepare($updateInventoryQuery);
             $stmtInventory->bind_param("i", $reservation_id);
             $stmtInventory->execute();
-            
-            // Check if execute() succeeded
-            if ($stmtInventory === false) {
-                die("Error in execute(): " . $mysqli->error);
-            }
             $stmtInventory->close();
-        } else {
-            // No records updated
-            // You can optionally display an alert message here
         }
-        
+
         $stmt->close();
     }
 }
@@ -191,7 +181,6 @@ if(isset($_POST['due_date']) && isset($_POST['rid'])) {
         <a href="admin_pf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Profile</a>
         <a href="admin_attd.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Library Logs</a>
         <a href="admin_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Statistics</a>
-        <a href="admin_wres.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Walk-in-Borrow</a>
         <a href="admin_preq.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Pending Requests</a>
         <a href="admin_brel.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item active">Borrowed Books</a>
         <a href="admin_ob.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Overdue Books</a>
@@ -220,6 +209,7 @@ if(isset($_POST['due_date']) && isset($_POST['rid'])) {
     <br>
     <div class="content-container">
         <div class="search-bar">
+        <h2>Books to be Returned</h2>
             </div>
             
             
@@ -254,8 +244,13 @@ if(isset($_POST['due_date']) && isset($_POST['rid'])) {
                             echo "<td>" . $row["date_rel"] . "</td>";
                             echo "<td>" . $row["due_date"] . "</td>";
                             // Hidden input field to store reservation ID
-                            echo "<td style='text-align: center;'><form method='post'><input type='hidden' name='reservation_id' value='" . $row["rid"] . "'><button type='submit' class='approve-btn' name='checkButton'><i class='fas fa-check'></i></button></form></td>";
-                            // Add edit and delete buttons
+                            echo "<td style='text-align: center;'>
+                            <form method='post'>
+                                <input type='hidden' name='reservation_id' value='" . $row["rid"] . "'>
+                                <button type='button' class='approve-btn'><i class='fas fa-check'></i></button>
+                            </form>
+                        </td>";                               
+                        // Add edit and delete buttons
                             echo "<td>";
                             echo '<a href="#" class="edit-btn" data-rid="' . $row["rid"] . '" data-due_date="' . $row["due_date"] . '"><i class="fas fa-edit"></i></a>';
                             echo '</td>';
@@ -297,7 +292,7 @@ if(isset($_POST['due_date']) && isset($_POST['rid'])) {
     </div>
 </div>
 
-</body>
+
 <!-- JavaScript code to update date and time -->
 <script>
     // Function to show SweetAlert for overdue books
@@ -379,7 +374,64 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 });
 </script>
+<script>
+    document.querySelectorAll('.approve-btn').forEach(button => {
+    button.addEventListener('click', function (event) {
+        event.preventDefault();
 
+        const form = this.closest('form');
+        const reservationId = form.querySelector('input[name="reservation_id"]').value;
 
+        Swal.fire({
+            title: 'Enter Remarks',
+            input: 'text',
+            inputLabel: 'Remarks:',
+            inputPlaceholder: 'Type remarks here',
+            inputAttributes: {
+                style: 'width: 88%; padding: 8px; font-size: 16px; box-sizing: border-box;'
+            },
+            showCancelButton: false,
+            confirmButtonText: 'OK',
+            cancelButtonText: 'Cancel',
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'You need to write something!';
+                }
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const remarks = result.value;
+
+                // Create a hidden form to submit the data
+                const hiddenForm = document.createElement('form');
+                hiddenForm.method = 'POST';
+                hiddenForm.action = '';
+
+                const reservationInput = document.createElement('input');
+                reservationInput.type = 'hidden';
+                reservationInput.name = 'reservation_id';
+                reservationInput.value = reservationId;
+
+                const remarksInput = document.createElement('input');
+                remarksInput.type = 'hidden';
+                remarksInput.name = 'remarks';
+                remarksInput.value = remarks;
+
+                const checkButtonInput = document.createElement('input');
+                checkButtonInput.type = 'hidden';
+                checkButtonInput.name = 'checkButton';
+
+                hiddenForm.appendChild(reservationInput);
+                hiddenForm.appendChild(remarksInput);
+                hiddenForm.appendChild(checkButtonInput);
+
+                document.body.appendChild(hiddenForm);
+                hiddenForm.submit();
+            }
+        });
+    });
+});
+</script>
+</body>
 </html>
 

@@ -102,6 +102,12 @@ $currentFile = getCurrentFileName();
     <link rel="icon" type="image/x-icon" href="css/pics/logop.png">
     <link rel="stylesheet" href="css/admin_srch.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+    a {
+        text-decoration: none;
+        color: black;
+    }
+</style>
 </head>
 <body class="bg">
 <div class="sidebar">
@@ -120,7 +126,6 @@ $currentFile = getCurrentFileName();
         <a href="admin_pf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Profile</a>
         <a href="admin_attd.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Library Logs</a>
         <a href="admin_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Statistics</a>
-        <a href="admin_wres.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Walk-in-Borrow</a>
         <a href="admin_preq.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Pending Requests</a>
         <a href="admin_brel.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Borrowed Books</a>
         <a href="admin_ob.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Overdue Books</a>
@@ -136,7 +141,7 @@ $currentFile = getCurrentFileName();
 
     <div class="content">
         <nav class="secondary-navbar">
-            <a href="admin_asts_inv.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="secondary-navbar-item active">Search</a>
+            <a href="admin_asts_inv.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="secondary-navbar-item active">Assets</a>
         </nav>
     </div>
     
@@ -166,8 +171,8 @@ $currentFile = getCurrentFileName();
             
             <label for="searchDate" class="label"></label>
             <input type="date" id="searchDate" name="p_date" class="input" placeholder="Enter purchase date..." value="<?php echo isset($_GET['p_date']) ? $_GET['p_date'] : ''; ?>">
-            <button type="submit" style="margin-left:15px;">Search</button>
-            <a href="admin_asts_inv.php<?php if(isset($_GET['aid'])) echo '?aid=' . $_GET['aid']; ?>" class="delete-btn">Clear</a> <!-- Added Clear button -->
+            <button type="submit" style=""><i class='fas fa-search'></i> Search</button>
+            <button type="button"><a href="admin_asts_inv.php<?php if(isset($_GET['aid'])) echo '?aid=' . $_GET['aid']; ?>"><i class="fa-regular fa-circle-xmark"></i> Clear</a></button> <!-- Added Clear button -->
     </form>
 </div>
 <a href="admin_add_asts.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="add-lib"><i class='fas fa-plus'></i> Add Asset(s)</a>
@@ -185,7 +190,7 @@ $currentFile = getCurrentFileName();
                         <th>Number of Units</th>
                         <th>Additional Info</th>
                         <th>Condition</th>
-                        <th colspan="2">Actions:</th>
+                        <th colspan="1">Actions:</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -260,10 +265,10 @@ $currentFile = getCurrentFileName();
                                 echo  $row['cndtn'] ;
                             }
                             echo '</td>'; // End condition column
-                            echo '<td>';
+                            echo '<td style="text-align:center;">';
                             echo '<button class="edit-btn" onclick="editAsset(' . $row['as_id'] . ')"><i class="fas fa-edit"></i></button>';
                             echo '</td>';
-                            echo '<td>';
+                            echo '<td hidden>';
                             echo '<form id="delete_form_' . $row['as_id'] . '" method="POST">';
                             echo '<input type="hidden" name="delete_asid" value="' . $row['as_id'] . '">';
                             echo '<button class="delete-btn" type="button" onclick="deleteAsset(' . $row['as_id'] . ')"><i class="fas fa-trash-alt"></i></button>';

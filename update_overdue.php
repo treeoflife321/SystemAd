@@ -15,6 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $title = $_POST['title'];
     $fines = $_POST['fines'];
     $date_set = $_POST['date_set'];
+    $remarks = $_POST['remarks']; // New input for remarks
 
     // Convert date format from m-d-Y to Y-m-d
     $date_set = DateTime::createFromFormat('m-d-Y', $date_set)->format('Y-m-d');
@@ -31,8 +32,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     try {
         // Insert data into ovrd table
-        $insertOvrd = $mysqli->prepare("INSERT INTO ovrd (rid, uid, bid, info, title, fines, date_set) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $insertOvrd->bind_param("iiissss", $rid, $uid, $bid, $info, $title, $fines, $date_set);
+        $insertOvrd = $mysqli->prepare("INSERT INTO ovrd (rid, uid, bid, info, title, fines, date_set, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $insertOvrd->bind_param("iiisssss", $rid, $uid, $bid, $info, $title, $fines, $date_set, $remarks);
         $insertOvrd->execute();
         
         // Update the status in rsv table to "Settled"

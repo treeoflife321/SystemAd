@@ -91,11 +91,10 @@ if(isset($_POST['delete_pdf_id'])) {
         }
         ?>
     <a href="admin_dash.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Dashboard</a>
-    <a href="admin_pf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Profile</a>
+    <a href="admin_pf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Credentials</a>
     <a href="admin_srch.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Accounts</a>
     <a href="admin_attd.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Library Logs</a>
     <a href="admin_stat.php<?php if (isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">User Statistics</a>
-    <a href="admin_wres.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Walk-in-Borrow</a>
     <a href="admin_preq.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Pending Requests</a>
     <a href="admin_brel.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Borrowed Books</a>
     <a href="admin_ob.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="sidebar-item">Overdue Books</a>
@@ -122,7 +121,7 @@ if(isset($_POST['delete_pdf_id'])) {
         <input type="text" id="searchAuthor" placeholder="Search by Author..." onkeyup="searchTable()">
         <input type="text" id="searchYear" placeholder="Search by Year..." onkeyup="searchTable()">
         <input type="text" id="searchGenre" placeholder="Search by Genre..." onkeyup="searchTable()">
-        <button class="delete-btn" id="clearButton" onclick="clearSearch()">Clear</button>
+        <button type="button" id="clearButton" onclick="clearSearch()"><i class="fa-regular fa-circle-xmark"></i> Clear</button>
     </div>
     <a href="admin_add_pdf.php<?php if(isset($aid)) echo '?aid=' . $aid; ?>" class="add-lib"><i class='fas fa-plus'></i> Add E-Book</a>
 
